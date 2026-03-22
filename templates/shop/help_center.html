@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}帮助中心 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="help-layout">
+    <aside class="content-card soft">
+        <p class="eyebrow">Sections</p>
+        <h2>帮助中心</h2>
+        <div class="category-list">
+            <a class="category-link {% if not current_section %}active{% endif %}" href="{% url 'shop:help_center' %}">
+                <span>全部文章</span>
+            </a>
+            {% for value, label in section_choices %}
+                <a class="category-link {% if current_section == value %}active{% endif %}" href="{% url 'shop:help_center' %}?section={{ value }}">
+                    <span>{{ label }}</span>
+                </a>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <div class="help-main">
+        <section class="content-card soft">
+            <p class="eyebrow">Documentation</p>
+            <h1>帮助中心</h1>
+            <p class="lead">这里集中放新手教程、常见问题、售后说明和接口对接文档。</p>
+        </section>
+
+        <section class="article-list">
+            {% for article in articles %}
+                <article class="content-card soft article-list-item">
+                    <div class="article-list-head">
+                        <span class="pill">{{ article.get_section_display }}</span>
+                        <a href="{% url 'shop:help_article_detail' article.slug %}">阅读详情</a>
+                    </div>
+                    <h3>{{ article.title }}</h3>
+                    <p class="muted">{{ article.summary }}</p>
+                </article>
+            {% empty %}
+                <div class="content-card soft">
+                    <p class="muted">当前栏目下还没有文章。</p>
+                </div>
+            {% endfor %}
+        </section>
+    </div>
+
+    <aside class="content-card soft">
+        <p class="eyebrow">Featured</p>
+        <h2>推荐阅读</h2>
+        <div class="quick-link-list">
+            {% for article in featured_articles %}
+                <a href="{% url 'shop:help_article_detail' article.slug %}">{{ article.title }}</a>
+            {% empty %}
+                <span class="muted">暂无推荐文章。</span>
+            {% endfor %}
+        </div>
+    </aside>
+</section>
+{% endblock %}

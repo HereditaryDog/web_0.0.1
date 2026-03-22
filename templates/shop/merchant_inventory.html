@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}库存卡密 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="merchant-shell">
+    {% include "shop/partials/merchant_sidebar.html" %}
+
+    <div class="merchant-main">
+        <section class="section-heading">
+            <div>
+                <p class="eyebrow">Inventory</p>
+                <h1>库存卡密管理</h1>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="content-card soft">
+                <h3>批量导入卡密</h3>
+                <form method="post" class="form-grid">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    {% for field in form %}
+                        <label class="field">
+                            <span>{{ field.label }}</span>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <small class="error-text">{{ field.errors|join:", " }}</small>
+                            {% endif %}
+                        </label>
+                    {% endfor %}
+                    <button type="submit" class="primary-button">导入卡密</button>
+                </form>
+            </div>
+
+            <div class="content-card soft">
+                <div class="section-heading mini">
+                    <div>
+                        <h3>最近库存</h3>
+                        <p class="muted">显示最近 50 条卡密记录</p>
+                    </div>
+                    <form method="get">
+                        <select name="product" onchange="this.form.submit()">
+                            <option value="">全部商品</option>
+                            {% for product in products %}
+                                <option value="{{ product.id }}" {% if current_product_id == product.id|stringformat:'s' %}selected{% endif %}>
+                                    {{ product.title }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+                <div class="table-card compact">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>商品</th>
+                                <th>卡密</th>
+                                <th>状态</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code in card_codes %}
+                                <tr>
+                                    <td>{{ code.product.title }}</td>
+                                    <td>{{ code.code }}</td>
+                                    <td>{{ code.get_status_display }}</td>
+                                    <td>{{ code.note|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4">当前没有库存记录。</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

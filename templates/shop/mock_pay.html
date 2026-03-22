@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}模拟支付 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card narrow">
+    <p class="eyebrow">Mock Payment</p>
+    <h1>本地模拟支付页</h1>
+    <p class="lead">订单 {{ order.order_no }}，支付完成后系统会立即自动发货。</p>
+    <div class="payment-ticket">
+        <div class="row-line"><span>应付金额</span><strong>HK${{ order.total_amount }}</strong></div>
+        <div class="row-line"><span>支付渠道</span><strong>Mock Gateway</strong></div>
+        <div class="row-line"><span>说明</span><strong>用于开发和流程验收</strong></div>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="primary-button full-width">确认模拟支付</button>
+    </form>
+</section>
+{% endblock %}

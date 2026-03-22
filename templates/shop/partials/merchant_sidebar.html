@@ -1,0 +1,17 @@
+<aside class="merchant-sidebar">
+    <p class="eyebrow">Back Office</p>
+    <h2>商家工作台</h2>
+    <p class="muted">在这里统一管理商品、卡密库存和订单状态。</p>
+
+    <nav class="merchant-menu">
+        <a class="{% if merchant_tab == 'dashboard' %}active{% endif %}" href="{% url 'shop:merchant_dashboard' %}">总览</a>
+        <a class="{% if merchant_tab == 'products' %}active{% endif %}" href="{% url 'shop:merchant_products' %}">商品管理</a>
+        <a class="{% if merchant_tab == 'inventory' %}active{% endif %}" href="{% url 'shop:merchant_inventory' %}">库存卡密</a>
+        <a class="{% if merchant_tab == 'orders' %}active{% endif %}" href="{% url 'shop:merchant_orders' %}">订单管理</a>
+        <a href="/admin/">高级后台</a>
+    </nav>
+    <div class="merchant-note">
+        <strong>提示</strong>
+        <p class="muted">真实上线时建议把支付和供货配置放到环境变量，并把数据库迁移到 PostgreSQL。</p>
+    </div>
+</aside>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ announcement.title }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card narrow">
+    <p class="eyebrow">Announcement</p>
+    <h1>{{ announcement.title }}</h1>
+    <p class="muted">发布时间：{{ announcement.created_at|date:"Y-m-d H:i" }}</p>
+    <div class="article-content">
+        {{ announcement.body|linebreaks }}
+    </div>
+    {% if announcement.link_url %}
+        <a class="ghost-button" href="{{ announcement.link_url }}" target="_blank" rel="noreferrer">打开原始链接</a>
+    {% endif %}
+    <a class="primary-button" href="{% url 'shop:storefront' %}">返回首页</a>
+</section>
+{% endblock %}

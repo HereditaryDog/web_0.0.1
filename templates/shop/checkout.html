@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}订单结算 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Checkout</p>
+            <h1>订单 {{ order.order_no }}</h1>
+        </div>
+        <span class="pill">{{ order.get_status_display }}</span>
+    </div>
+    <div class="checkout-layout">
+        <div class="content-card soft">
+            <h3>订单内容</h3>
+            {% for item in order.items.all %}
+                <div class="row-line">
+                    <div>
+                        <strong>{{ item.product_title }}</strong>
+                        <p class="muted">数量 {{ item.quantity }}</p>
+                    </div>
+                    <span>HK${{ item.line_total }}</span>
+                </div>
+            {% endfor %}
+            <div class="row-line total-row">
+                <strong>合计</strong>
+                <strong>HK${{ order.total_amount }}</strong>
+            </div>
+        </div>
+        <div class="content-card soft">
+            <h3>支付方式</h3>
+            <p class="muted">
+                当前如果未配置 Stripe，会自动走本地模拟支付流程。
+                等你填入正式密钥后，这里会直接跳转到 Stripe Checkout。
+            </p>
+            {% if order.payment_status == "paid" %}
+                <a class="primary-button full-width" href="{% url 'shop:order_detail' order.order_no %}">查看订单结果</a>
+            {% else %}
+                <form method="post" action="{% url 'shop:start_payment' order.order_no %}">
+                    {% csrf_token %}
+                    <button type="submit" class="primary-button full-width">创建支付并继续</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

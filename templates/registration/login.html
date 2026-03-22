@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}登录 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-card">
+        <p class="eyebrow">Welcome back</p>
+        <h1>登录商城账号</h1>
+        <p class="muted">登录后继续支付、查看卡密和访问订单详情。</p>
+        <form method="post" class="form-grid">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                <label class="field">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% if field.errors %}
+                        <small class="error-text">{{ field.errors|join:", " }}</small>
+                    {% endif %}
+                </label>
+            {% endfor %}
+            <button type="submit" class="primary-button">登录</button>
+        </form>
+        <p class="muted">还没有账号？<a href="{% url 'accounts:signup' %}">去注册</a></p>
+    </div>
+</section>
+{% endblock %}

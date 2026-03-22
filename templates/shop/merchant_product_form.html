@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}编辑商品{% else %}新增商品{% endif %} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="merchant-shell">
+    {% include "shop/partials/merchant_sidebar.html" %}
+
+    <div class="merchant-main">
+        <section class="section-heading">
+            <div>
+                <p class="eyebrow">Product Form</p>
+                <h1>{% if form.instance.pk %}编辑商品{% else %}新增商品{% endif %}</h1>
+            </div>
+        </section>
+
+        <section class="content-card soft">
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for field in form %}
+                    <label class="field">
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small class="muted">{{ field.help_text }}</small>
+                        {% endif %}
+                        {% if field.errors %}
+                            <small class="error-text">{{ field.errors|join:", " }}</small>
+                        {% endif %}
+                    </label>
+                {% endfor %}
+                <button type="submit" class="primary-button">保存商品</button>
+            </form>
+        </section>
+    </div>
+</section>
+{% endblock %}

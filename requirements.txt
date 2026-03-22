@@ -1,0 +1,7 @@
+Django==5.2.12
+stripe==14.4.1
+requests==2.32.5
+python-dotenv==1.2.2
+Pillow==12.1.1
+psycopg[binary]==3.3.3
+waitress==3.0.2

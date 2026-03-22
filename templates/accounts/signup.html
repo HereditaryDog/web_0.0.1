@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}注册 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <div class="auth-card">
+        <p class="eyebrow">Create account</p>
+        <h1>创建你的买家账号</h1>
+        <p class="muted">注册后可以查看订单、自动接收卡密，并保留支付记录。</p>
+        <form method="post" class="form-grid">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                <label class="field">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% if field.errors %}
+                        <small class="error-text">{{ field.errors|join:", " }}</small>
+                    {% endif %}
+                </label>
+            {% endfor %}
+            <button type="submit" class="primary-button">立即注册</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

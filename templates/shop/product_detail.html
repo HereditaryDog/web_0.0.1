@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.title }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="detail-layout">
+    <div class="detail-visual" style="background-image: linear-gradient(135deg, rgba(6,23,18,.84), rgba(6,23,18,.28)), url('{{ product.cover_url }}');">
+        {% if product.badge %}
+            <span class="pill">{{ product.badge }}</span>
+        {% endif %}
+        <div class="detail-copy">
+            <p class="eyebrow">{{ product.inventory_label }}</p>
+            <h1>{{ product.title }}</h1>
+            <p class="lead">{{ product.summary }}</p>
+        </div>
+    </div>
+    <div class="detail-panel">
+        <div class="price-box">
+            <strong>HK${{ product.price }}</strong>
+            <span>面值 HK${{ product.face_value }} / {{ product.token_amount }} tokens</span>
+        </div>
+        <p class="muted">{{ product.description }}</p>
+        {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'shop:create_order' product.slug %}" class="form-grid compact">
+                {% csrf_token %}
+                {% for field in form %}
+                    <label class="field">
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                    </label>
+                {% endfor %}
+                <button type="submit" class="primary-button">立即下单</button>
+            </form>
+        {% else %}
+            <div class="notice-card">
+                <p>下单前需要先登录账号。</p>
+                <a class="primary-button" href="{% url 'login' %}?next={{ request.path }}">先登录再购买</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

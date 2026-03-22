@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="help-detail-layout">
+    <article class="content-card soft">
+        <p class="eyebrow">{{ article.get_section_display }}</p>
+        <h1>{{ article.title }}</h1>
+        <p class="lead">{{ article.summary }}</p>
+        <div class="article-content">
+            {{ article.content|linebreaks }}
+        </div>
+    </article>
+
+    <aside class="content-card soft">
+        <p class="eyebrow">Related</p>
+        <h2>同栏目文章</h2>
+        <div class="quick-link-list">
+            {% for item in related_articles %}
+                <a href="{% url 'shop:help_article_detail' item.slug %}">{{ item.title }}</a>
+            {% empty %}
+                <span class="muted">当前没有更多相关文章。</span>
+            {% endfor %}
+        </div>
+        <a class="ghost-button" href="{% url 'shop:help_center' %}?section={{ article.section }}">返回栏目</a>
+    </aside>
+</section>
+{% endblock %}

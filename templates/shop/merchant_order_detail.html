@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}订单详情 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="merchant-shell">
+    {% include "shop/partials/merchant_sidebar.html" %}
+
+    <div class="merchant-main">
+        <section class="section-heading">
+            <div>
+                <p class="eyebrow">Order Detail</p>
+                <h1>{{ order.order_no }}</h1>
+            </div>
+            <span class="pill">{{ order.get_status_display }}</span>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="content-card soft">
+                <h3>订单概览</h3>
+                <div class="row-line"><span>买家账号</span><strong>{{ order.user.username }}</strong></div>
+                <div class="row-line"><span>邮箱</span><strong>{{ order.user.email|default:"-" }}</strong></div>
+                <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
+                <div class="row-line"><span>支付渠道</span><strong>{{ order.payment_provider|default:"-" }}</strong></div>
+                <div class="row-line"><span>支付流水</span><strong>{{ order.payment_reference|default:"-" }}</strong></div>
+                <div class="row-line"><span>总金额</span><strong>HK${{ order.total_amount }}</strong></div>
+            </div>
+
+            <div class="content-card soft">
+                <h3>订单明细与发货</h3>
+                {% for item in order.items.all %}
+                    <div class="delivery-block">
+                        <strong>{{ item.product_title }} x {{ item.quantity }}</strong>
+                        <div class="muted">单价 HK${{ item.unit_price }}</div>
+                        {% for delivery in item.deliveries.all %}
+                            <div class="delivery-code">{{ delivery.display_code }}</div>
+                        {% empty %}
+                            <p class="muted">尚未发货。</p>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="content-card soft">
+            <h3>支付记录</h3>
+            <div class="table-card compact">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>渠道</th>
+                            <th>流水</th>
+                            <th>状态</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in order.payment_attempts.all %}
+                            <tr>
+                                <td>{{ attempt.provider }}</td>
+                                <td>{{ attempt.reference }}</td>
+                                <td>{{ attempt.get_status_display }}</td>
+                                <td>{{ attempt.created_at|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4">暂无支付记录。</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

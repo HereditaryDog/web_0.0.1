@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}订单详情 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Order Detail</p>
+            <h1>{{ order.order_no }}</h1>
+        </div>
+        <span class="pill">{{ order.get_status_display }}</span>
+    </div>
+    <div class="checkout-layout">
+        <div class="content-card soft">
+            <h3>订单信息</h3>
+            <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
+            <div class="row-line"><span>支付方式</span><strong>{{ order.payment_provider|default:"未生成" }}</strong></div>
+            <div class="row-line"><span>支付流水</span><strong>{{ order.payment_reference|default:"-" }}</strong></div>
+            <div class="row-line"><span>订单金额</span><strong>HK${{ order.total_amount }}</strong></div>
+        </div>
+        <div class="content-card soft">
+            <h3>已发货内容</h3>
+            {% for item in order.items.all %}
+                <div class="delivery-block">
+                    <strong>{{ item.product_title }}</strong>
+                    {% for delivery in item.deliveries.all %}
+                        <div class="delivery-code">{{ delivery.display_code }}</div>
+                    {% empty %}
+                        <p class="muted">支付完成后会在这里展示卡密或 Token 兑换码。</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

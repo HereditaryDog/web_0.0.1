@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}订单查询 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card narrow">
+    <p class="eyebrow">Order Lookup</p>
+    <h1>订单查询</h1>
+    <p class="lead">输入订单号和下单邮箱，查看支付状态和发货结果。</p>
+
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <label class="field">
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.errors %}
+                    <small class="error-text">{{ field.errors|join:", " }}</small>
+                {% endif %}
+            </label>
+        {% endfor %}
+        <button type="submit" class="primary-button">查询订单</button>
+    </form>
+
+    {% if order %}
+        <div class="lookup-result">
+            <div class="row-line"><span>订单号</span><strong>{{ order.order_no }}</strong></div>
+            <div class="row-line"><span>订单状态</span><strong>{{ order.get_status_display }}</strong></div>
+            <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
+            <div class="row-line"><span>支付渠道</span><strong>{{ order.payment_provider|default:"-" }}</strong></div>
+            <div class="row-line"><span>下单时间</span><strong>{{ order.created_at|date:"Y-m-d H:i" }}</strong></div>
+
+            {% for item in order.items.all %}
+                <div class="delivery-block">
+                    <strong>{{ item.product_title }} x {{ item.quantity }}</strong>
+                    {% for delivery in item.deliveries.all %}
+                        <div class="delivery-code">{{ delivery.display_code }}</div>
+                    {% empty %}
+                        <p class="muted">当前还没有发货内容，通常是在支付完成后生成。</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

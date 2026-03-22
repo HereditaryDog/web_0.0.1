@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}商家后台 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="merchant-shell">
+    {% include "shop/partials/merchant_sidebar.html" %}
+
+    <div class="merchant-main">
+        <section class="section-heading">
+            <div>
+                <p class="eyebrow">Merchant Console</p>
+                <h1>商城管理后台</h1>
+            </div>
+            <div class="hero-actions">
+                <a class="ghost-button" href="{% url 'shop:merchant_product_create' %}">新增商品</a>
+                <a class="ghost-button" href="{% url 'shop:merchant_inventory' %}">导入卡密</a>
+                <a class="ghost-button" href="/admin/">高级后台</a>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <article class="metric-card large">
+                <strong>{{ product_count }}</strong>
+                <span>商品数量</span>
+            </article>
+            <article class="metric-card large">
+                <strong>{{ paid_order_count }}</strong>
+                <span>已支付订单</span>
+            </article>
+            <article class="metric-card large">
+                <strong>{{ pending_order_count }}</strong>
+                <span>待支付订单</span>
+            </article>
+            <article class="metric-card large">
+                <strong>{{ card_stock_count }}</strong>
+                <span>剩余库存卡密</span>
+            </article>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="content-card soft">
+                <h3>最近订单</h3>
+                <div class="table-card compact">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>订单号</th>
+                                <th>用户</th>
+                                <th>状态</th>
+                                <th>金额</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                                <tr>
+                                    <td><a href="{% url 'shop:merchant_order_detail' order.order_no %}">{{ order.order_no }}</a></td>
+                                    <td>{{ order.user.username }}</td>
+                                    <td>{{ order.get_status_display }}</td>
+                                    <td>HK${{ order.total_amount }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4">暂无订单</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="content-card soft">
+                <h3>低库存提醒</h3>
+                {% for product in low_stock_products %}
+                    <div class="row-line">
+                        <div>
+                            <strong>{{ product.title }}</strong>
+                            <p class="muted">库存 {{ product.inventory_count }} 张</p>
+                        </div>
+                        <a href="{% url 'shop:merchant_inventory' %}?product={{ product.id }}">去补库存</a>
+                    </div>
+                {% empty %}
+                    <p class="muted">当前没有低库存商品。</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

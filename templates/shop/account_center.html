@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}我的订单 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Account Center</p>
+            <h1>我的订单</h1>
+        </div>
+    </div>
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>订单号</th>
+                    <th>状态</th>
+                    <th>金额</th>
+                    <th>时间</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                    <tr>
+                        <td>{{ order.order_no }}</td>
+                        <td>{{ order.get_status_display }}</td>
+                        <td>HK${{ order.total_amount }}</td>
+                        <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                        <td><a href="{% url 'shop:order_detail' order.order_no %}">查看</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">你还没有订单，先去首页挑一个点卡。</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

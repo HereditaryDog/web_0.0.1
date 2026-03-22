@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ result_title }} | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="content-card narrow">
+    <p class="eyebrow">Payment Status</p>
+    <h1>{{ result_title }}</h1>
+    <p class="lead">{{ result_message }}</p>
+    <div class="payment-ticket">
+        <div class="row-line"><span>订单号</span><strong>{{ order.order_no }}</strong></div>
+        <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
+        <div class="row-line"><span>订单状态</span><strong>{{ order.get_status_display }}</strong></div>
+    </div>
+    <a class="primary-button full-width" href="{% url 'shop:order_detail' order.order_no %}">查看订单详情</a>
+</section>
+{% endblock %}

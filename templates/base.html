@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="site-header site-header--dense">
+            <div class="brand-group">
+                <a class="brand-mark" href="{% url 'shop:storefront' %}">
+                    <span class="brand-dot"></span>
+                    <span>{{ site_name }}</span>
+                </a>
+                <p class="brand-subtitle">自动发卡 / Token 充值 / 帮助中心 / 商家管理</p>
+            </div>
+            <nav class="site-nav">
+                <a href="{% url 'shop:storefront' %}">首页</a>
+                <a href="{% url 'shop:help_center' %}">帮助中心</a>
+                <a href="{% url 'shop:order_lookup' %}">订单查询</a>
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'shop:account_center' %}">我的订单</a>
+                    {% if request.user.is_staff or request.user.is_superuser or request.user.is_merchant %}
+                        <a href="{% url 'shop:merchant_dashboard' %}">商家后台</a>
+                        <a href="/admin/">Admin</a>
+                    {% endif %}
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="ghost-button">退出</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">登录</a>
+                    <a class="cta-link" href="{% url 'accounts:signup' %}">注册</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        {% if messages %}
+            <section class="flash-stack">
+                {% for message in messages %}
+                    <div class="flash-message {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

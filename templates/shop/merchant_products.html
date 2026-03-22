@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}商品管理 | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="merchant-shell">
+    {% include "shop/partials/merchant_sidebar.html" %}
+
+    <div class="merchant-main">
+        <section class="section-heading">
+            <div>
+                <p class="eyebrow">Products</p>
+                <h1>商品管理</h1>
+            </div>
+            <a class="primary-button" href="{% url 'shop:merchant_product_create' %}">新增商品</a>
+        </section>
+
+        <section class="content-card soft">
+            <div class="table-card compact">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>商品</th>
+                            <th>供货方式</th>
+                            <th>售价</th>
+                            <th>库存</th>
+                            <th>状态</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                            <tr>
+                                <td>
+                                    <strong>{{ product.title }}</strong>
+                                    <div class="muted">{{ product.slug }}</div>
+                                </td>
+                                <td>{{ product.get_delivery_method_display }}</td>
+                                <td>HK${{ product.price }}</td>
+                                <td>{{ product.inventory_label }}</td>
+                                <td>{% if product.is_active %}上架{% else %}下架{% endif %}</td>
+                                <td><a href="{% url 'shop:merchant_product_edit' product.id %}">编辑</a></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6">还没有商品，先创建第一个点卡商品。</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}
