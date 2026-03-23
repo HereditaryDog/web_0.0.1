@@ -12,13 +12,31 @@
                 <p class="eyebrow">Orders</p>
                 <h1>订单管理</h1>
             </div>
-            <form method="get">
-                <select name="status" onchange="this.form.submit()">
-                    <option value="">全部状态</option>
-                    {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
+            <form method="get" class="filter-toolbar">
+                <label class="field">
+                    <span>搜索</span>
+                    {{ filter_form.query }}
+                </label>
+                <label class="field">
+                    <span>订单状态</span>
+                    {{ filter_form.status }}
+                </label>
+                <label class="field">
+                    <span>支付状态</span>
+                    {{ filter_form.payment_status }}
+                </label>
+                <label class="field">
+                    <span>开始日期</span>
+                    {{ filter_form.date_from }}
+                </label>
+                <label class="field">
+                    <span>结束日期</span>
+                    {{ filter_form.date_to }}
+                </label>
+                <div class="filter-toolbar__actions">
+                    <button type="submit" class="primary-button">筛选</button>
+                    <a class="ghost-button" href="{% url 'shop:merchant_orders' %}">重置</a>
+                </div>
             </form>
         </section>
 
@@ -33,6 +51,7 @@
                             <th>支付</th>
                             <th>金额</th>
                             <th>时间</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -44,10 +63,29 @@
                                 <td>{{ order.get_payment_status_display }}</td>
                                 <td>HK${{ order.total_amount }}</td>
                                 <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a class="ghost-button" href="{% url 'shop:merchant_order_detail' order.order_no %}">查看</a>
+                                        <a class="ghost-button" href="{% url 'shop:merchant_order_detail' order.order_no %}#delivery-records">发货内容</a>
+                                        <form method="post" action="{% url 'shop:merchant_order_action' order.order_no %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="resend_delivery">
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit" class="ghost-button">重发卡密</button>
+                                        </form>
+                                        <form method="post" action="{% url 'shop:merchant_order_action' order.order_no %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="mark_failed">
+                                            <input type="hidden" name="merchant_note" value="商家在订单列表中手动标记异常。">
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit" class="ghost-button">标记异常</button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="6">当前没有订单。</td>
+                                <td colspan="7">当前没有订单。</td>
                             </tr>
                         {% endfor %}
                     </tbody>

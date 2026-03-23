@@ -9,7 +9,14 @@
             <p class="eyebrow">Order Detail</p>
             <h1>{{ order.order_no }}</h1>
         </div>
-        <span class="pill">{{ order.get_status_display }}</span>
+        <div class="table-actions">
+            <span class="pill">{{ order.get_status_display }}</span>
+            <button type="button" class="ghost-button js-copy-trigger" data-copy-text="{{ order.order_no }}">复制订单号</button>
+            <form method="post" action="{% url 'shop:reorder' order.order_no %}">
+                {% csrf_token %}
+                <button type="submit" class="ghost-button">再次购买</button>
+            </form>
+        </div>
     </div>
     <div class="checkout-layout">
         <div class="content-card soft">
@@ -21,11 +28,16 @@
         </div>
         <div class="content-card soft">
             <h3>已发货内容</h3>
+            {% with all_codes=order.items.all %}
+            {% endwith %}
             {% for item in order.items.all %}
                 <div class="delivery-block">
                     <strong>{{ item.product_title }}</strong>
                     {% for delivery in item.deliveries.all %}
-                        <div class="delivery-code">{{ delivery.display_code }}</div>
+                        <div class="copy-row">
+                            <div class="delivery-code">{{ delivery.display_code }}</div>
+                            <button type="button" class="ghost-button js-copy-trigger" data-copy-text="{{ delivery.display_code }}">复制</button>
+                        </div>
                     {% empty %}
                         <p class="muted">支付完成后会在这里展示卡密或 Token 兑换码。</p>
                     {% endfor %}
@@ -34,4 +46,19 @@
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".js-copy-trigger").forEach(function (button) {
+        button.addEventListener("click", async function () {
+            await navigator.clipboard.writeText(button.dataset.copyText || "");
+            const originalText = button.textContent;
+            button.textContent = "已复制";
+            window.setTimeout(function () {
+                button.textContent = originalText;
+            }, 1400);
+        });
+    });
+});
+</script>
 {% endblock %}

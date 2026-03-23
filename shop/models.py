@@ -105,6 +105,7 @@ class Product(TimeStampedModel):
     )
     provider_sku = models.CharField("合作方 SKU", max_length=80, blank=True)
     badge = models.CharField("角标文案", max_length=40, blank=True)
+    low_stock_threshold = models.PositiveIntegerField("低库存提醒阈值", default=3)
     is_active = models.BooleanField("上架中", default=True)
     is_featured = models.BooleanField("首页推荐", default=True)
 
@@ -178,6 +179,7 @@ class Order(TimeStampedModel):
     payment_reference = models.CharField("支付流水", max_length=120, blank=True)
     checkout_url = models.URLField("支付链接", blank=True)
     customer_note = models.CharField("买家备注", max_length=240, blank=True)
+    merchant_note = models.CharField("商家备注", max_length=240, blank=True)
     subtotal = models.DecimalField("小计", max_digits=10, decimal_places=2, default=Decimal("0.00"))
     total_amount = models.DecimalField("应付金额", max_digits=10, decimal_places=2, default=Decimal("0.00"))
     paid_at = models.DateTimeField("支付时间", null=True, blank=True)
@@ -252,3 +254,27 @@ class PaymentAttempt(TimeStampedModel):
 
     def __str__(self):
         return f"{self.order.order_no} - {self.provider}"
+
+
+class InventoryImportBatch(TimeStampedModel):
+    product = models.ForeignKey(Product, related_name="import_batches", on_delete=models.CASCADE)
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="inventory_import_batches",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    note = models.CharField("备注", max_length=120, blank=True)
+    total_submitted = models.PositiveIntegerField("提交数量", default=0)
+    imported_count = models.PositiveIntegerField("成功导入", default=0)
+    duplicate_count = models.PositiveIntegerField("重复数量", default=0)
+    duplicate_sample = models.TextField("重复样例", blank=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = "库存导入批次"
+        verbose_name_plural = "库存导入批次"
+
+    def __str__(self):
+        return f"{self.product.title} - {self.created_at:%Y-%m-%d %H:%M:%S}"

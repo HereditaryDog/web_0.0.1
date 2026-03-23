@@ -69,7 +69,7 @@
                     <div class="row-line">
                         <div>
                             <strong>{{ product.title }}</strong>
-                            <p class="muted">库存 {{ product.inventory_count }} 张</p>
+                            <p class="muted">库存 {{ product.inventory_count }} 张 / 阈值 {{ product.low_stock_threshold }} 张</p>
                         </div>
                         <a href="{% url 'shop:merchant_inventory' %}?product={{ product.id }}">去补库存</a>
                     </div>

@@ -24,21 +24,68 @@
                 <div class="row-line"><span>支付渠道</span><strong>{{ order.payment_provider|default:"-" }}</strong></div>
                 <div class="row-line"><span>支付流水</span><strong>{{ order.payment_reference|default:"-" }}</strong></div>
                 <div class="row-line"><span>总金额</span><strong>HK${{ order.total_amount }}</strong></div>
+                <div class="row-line"><span>商家备注</span><strong>{{ order.merchant_note|default:"-" }}</strong></div>
             </div>
 
-            <div class="content-card soft">
+            <div class="content-card soft" id="delivery-records">
                 <h3>订单明细与发货</h3>
+                {% if delivery_codes %}
+                    <div class="detail-toolbar">
+                        <button
+                            type="button"
+                            class="ghost-button js-copy-trigger"
+                            data-copy-source="all-delivery-codes"
+                        >
+                            复制全部卡密
+                        </button>
+                        <textarea id="all-delivery-codes" hidden>{{ delivery_codes|join:"&#10;" }}</textarea>
+                    </div>
+                {% endif %}
                 {% for item in order.items.all %}
                     <div class="delivery-block">
                         <strong>{{ item.product_title }} x {{ item.quantity }}</strong>
                         <div class="muted">单价 HK${{ item.unit_price }}</div>
                         {% for delivery in item.deliveries.all %}
-                            <div class="delivery-code">{{ delivery.display_code }}</div>
+                            <div class="copy-row">
+                                <div class="delivery-code">{{ delivery.display_code }}</div>
+                                <button
+                                    type="button"
+                                    class="ghost-button js-copy-trigger"
+                                    data-copy-text="{{ delivery.display_code }}"
+                                >
+                                    复制
+                                </button>
+                            </div>
                         {% empty %}
                             <p class="muted">尚未发货。</p>
                         {% endfor %}
                     </div>
                 {% endfor %}
+            </div>
+        </section>
+
+        <section class="content-card soft">
+            <div class="section-heading mini">
+                <div>
+                    <h3>订单操作</h3>
+                    <p class="muted">支持重发发货内容到邮箱，或手动标记异常。</p>
+                </div>
+            </div>
+            <div class="action-stack">
+                <form method="post" action="{% url 'shop:merchant_order_action' order.order_no %}" class="inline-action-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="resend_delivery">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button type="submit" class="primary-button">重发卡密到邮箱</button>
+                </form>
+
+                <form method="post" action="{% url 'shop:merchant_order_action' order.order_no %}" class="inline-action-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="mark_failed">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <input type="text" name="merchant_note" maxlength="240" placeholder="填写异常备注，例如用户反馈卡密无效">
+                    <button type="submit" class="ghost-button">手动标记异常</button>
+                </form>
             </div>
         </section>
 
@@ -73,4 +120,26 @@
         </section>
     </div>
 </section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".js-copy-trigger").forEach(function (button) {
+        button.addEventListener("click", async function () {
+            const sourceId = button.dataset.copySource;
+            const text = sourceId
+                ? document.getElementById(sourceId)?.value
+                : button.dataset.copyText;
+            if (!text) {
+                return;
+            }
+            await navigator.clipboard.writeText(text);
+            const originalText = button.textContent;
+            button.textContent = "已复制";
+            window.setTimeout(function () {
+                button.textContent = originalText;
+            }, 1400);
+        });
+    });
+});
+</script>
 {% endblock %}

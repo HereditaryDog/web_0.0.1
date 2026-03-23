@@ -32,8 +32,41 @@
                             {% endif %}
                         </label>
                     {% endfor %}
-                    <button type="submit" class="primary-button">导入卡密</button>
+                    <div class="table-actions">
+                        <button type="submit" name="intent" value="preview" class="ghost-button">预览导入</button>
+                        <button type="submit" name="intent" value="import" class="primary-button">确认导入</button>
+                    </div>
                 </form>
+
+                {% if import_preview %}
+                    <div class="preview-panel">
+                        <h4>导入预览</h4>
+                        <div class="summary-grid">
+                            <div class="summary-card">
+                                <strong>{{ import_preview.total_submitted }}</strong>
+                                <span>提交条数</span>
+                            </div>
+                            <div class="summary-card">
+                                <strong>{{ import_preview.importable_count }}</strong>
+                                <span>可导入</span>
+                            </div>
+                            <div class="summary-card">
+                                <strong>{{ import_preview.duplicate_count }}</strong>
+                                <span>重复条数</span>
+                            </div>
+                        </div>
+                        {% if import_preview.duplicate_samples %}
+                            <div class="table-card compact">
+                                <strong>重复样例</strong>
+                                <div class="preview-list">
+                                    {% for code in import_preview.duplicate_samples %}
+                                        <code>{{ code }}</code>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="content-card soft">
@@ -79,6 +112,47 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+
+        <section class="content-card soft">
+            <div class="section-heading mini">
+                <div>
+                    <h3>导入历史</h3>
+                    <p class="muted">记录最近的库存导入批次和重复情况。</p>
+                </div>
+            </div>
+            <div class="table-card compact">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>商品</th>
+                            <th>提交</th>
+                            <th>导入</th>
+                            <th>重复</th>
+                            <th>操作人</th>
+                            <th>备注</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in import_history %}
+                            <tr>
+                                <td>{{ batch.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>{{ batch.product.title }}</td>
+                                <td>{{ batch.total_submitted }}</td>
+                                <td>{{ batch.imported_count }}</td>
+                                <td>{{ batch.duplicate_count }}</td>
+                                <td>{{ batch.operator.username|default:"系统" }}</td>
+                                <td>{{ batch.note|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7">还没有导入历史。</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </section>
     </div>

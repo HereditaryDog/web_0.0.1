@@ -12,7 +12,23 @@
                 <p class="eyebrow">Products</p>
                 <h1>商品管理</h1>
             </div>
-            <a class="primary-button" href="{% url 'shop:merchant_product_create' %}">新增商品</a>
+            <div class="hero-actions">
+                <form method="get" class="filter-toolbar filter-toolbar--compact">
+                    <label class="field">
+                        <span>搜索</span>
+                        {{ filter_form.query }}
+                    </label>
+                    <label class="field">
+                        <span>上架状态</span>
+                        {{ filter_form.active }}
+                    </label>
+                    <div class="filter-toolbar__actions">
+                        <button type="submit" class="primary-button">筛选</button>
+                        <a class="ghost-button" href="{% url 'shop:merchant_products' %}">重置</a>
+                    </div>
+                </form>
+                <a class="primary-button" href="{% url 'shop:merchant_product_create' %}">新增商品</a>
+            </div>
         </section>
 
         <section class="content-card soft">
@@ -24,8 +40,9 @@
                             <th>供货方式</th>
                             <th>售价</th>
                             <th>库存</th>
+                            <th>提醒阈值</th>
                             <th>状态</th>
-                            <th></th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -38,12 +55,24 @@
                                 <td>{{ product.get_delivery_method_display }}</td>
                                 <td>HK${{ product.price }}</td>
                                 <td>{{ product.inventory_label }}</td>
+                                <td>{% if product.delivery_method == "stock_card" %}{{ product.low_stock_threshold }}{% else %}-{% endif %}</td>
                                 <td>{% if product.is_active %}上架{% else %}下架{% endif %}</td>
-                                <td><a href="{% url 'shop:merchant_product_edit' product.id %}">编辑</a></td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a class="ghost-button" href="{% url 'shop:merchant_product_edit' product.id %}">编辑</a>
+                                        <form method="post" action="{% url 'shop:merchant_product_toggle' product.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit" class="ghost-button">
+                                                {% if product.is_active %}下架{% else %}上架{% endif %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="6">还没有商品，先创建第一个点卡商品。</td>
+                                <td colspan="7">还没有商品，先创建第一个点卡商品。</td>
                             </tr>
                         {% endfor %}
                     </tbody>

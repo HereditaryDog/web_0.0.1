@@ -4,6 +4,7 @@ from .models import (
     CardCode,
     DeliveryRecord,
     HelpArticle,
+    InventoryImportBatch,
     Order,
     OrderItem,
     PaymentAttempt,
@@ -48,7 +49,7 @@ class HelpArticleAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "price", "delivery_method", "is_active", "is_featured")
+    list_display = ("title", "category", "price", "delivery_method", "low_stock_threshold", "is_active", "is_featured")
     list_filter = ("category", "delivery_method", "is_active", "is_featured")
     search_fields = ("title", "slug", "provider_sku")
     prepopulated_fields = {"slug": ("title",)}
@@ -63,7 +64,16 @@ class CardCodeAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("order_no", "user", "contact_email", "status", "payment_status", "total_amount", "created_at")
+    list_display = (
+        "order_no",
+        "user",
+        "contact_email",
+        "status",
+        "payment_status",
+        "total_amount",
+        "merchant_note",
+        "created_at",
+    )
     list_filter = ("status", "payment_status", "payment_provider")
     search_fields = ("order_no", "payment_reference", "contact_email", "user__username", "user__email")
     inlines = [OrderItemInline]
@@ -81,3 +91,10 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
     list_display = ("order", "provider", "reference", "status", "created_at")
     list_filter = ("provider", "status")
     search_fields = ("reference", "order__order_no")
+
+
+@admin.register(InventoryImportBatch)
+class InventoryImportBatchAdmin(admin.ModelAdmin):
+    list_display = ("product", "operator", "imported_count", "duplicate_count", "created_at")
+    list_filter = ("product",)
+    search_fields = ("product__title", "note", "duplicate_sample", "operator__username")
