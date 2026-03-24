@@ -6,3 +6,4 @@ Pillow==12.1.1
 psycopg[binary]==3.3.3
 waitress==3.0.2
 cryptography==46.0.5
+whitenoise==6.11.0

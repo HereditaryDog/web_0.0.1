@@ -1,4 +1,5 @@
 from django.core import mail
+from django.templatetags.static import static
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -479,6 +480,15 @@ class SecurityMiddlewareTests(TestCase):
         self.client.force_login(owner)
         response = self.client.get(reverse("shop:merchant_dashboard"), REMOTE_ADDR="127.0.0.1")
         self.assertEqual(response.status_code, 403)
+
+
+class StaticAssetTests(TestCase):
+    @override_settings(DEBUG=False)
+    def test_production_static_css_is_served(self):
+        response = self.client.get(static("css/site.css"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/css; charset=\"utf-8\"")
+        self.assertContains(response, ".page-shell")
 
 
 class ReadinessChecksTests(TestCase):
