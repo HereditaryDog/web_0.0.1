@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}{{ site_name }} | 自动发卡商城{% endblock %}
 
@@ -28,7 +29,7 @@
             <p class="eyebrow">What It Does</p>
             <h2>从下单到发货，一站完成。</h2>
             <p class="muted">
-                面向开发者和数字商品场景，支持 Token 充值、库存卡密、API 发货、订单查询和帮助中心。
+                面向开发者和数字商品场景，支持用人民币购买美元充值卡、组合套餐、订单查询和帮助中心。
             </p>
             <div class="trust-grid">
                 <div class="trust-badge">24 小时自动发货</div>
@@ -102,7 +103,7 @@
         <div class="section-intro">
             <p class="eyebrow">Products</p>
             <h2>{% if current_category %}分类商品{% else %}全部在售商品{% endif %}</h2>
-            <p class="muted product-section__lead">用更聚焦的陈列方式展示商品，帮助你更快比较面值、售价、库存和供货方式。</p>
+            <p class="muted product-section__lead">用更聚焦的陈列方式展示商品，帮助你更快比较美元面值、人民币售价、库存和供货方式。</p>
         </div>
         <div class="product-grid product-grid--apple">
             {% for product in products %}
@@ -126,12 +127,12 @@
                         <p class="product-card__summary">{{ product.summary }}</p>
                         <dl class="product-specs product-specs--apple">
                             <div>
-                                <dt>面值</dt>
-                                <dd>HK${{ product.face_value }}</dd>
+                                <dt>充值面值</dt>
+                                <dd>{{ product.face_value|usd }}</dd>
                             </div>
                             <div>
-                                <dt>售价</dt>
-                                <dd>HK${{ product.price }}</dd>
+                                <dt>人民币售价</dt>
+                                <dd>{{ product.price|cny }}</dd>
                             </div>
                             <div>
                                 <dt>Token</dt>

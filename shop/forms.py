@@ -39,9 +39,9 @@ class ProductForm(forms.ModelForm):
             "summary": "摘要",
             "description": "商品详情",
             "cover_url": "封面图链接",
-            "face_value": "面值",
+            "face_value": "充值面值（美元）",
             "token_amount": "Token 数量",
-            "price": "售价",
+            "price": "售价（人民币）",
             "delivery_method": "供货方式",
             "provider_sku": "合作方 SKU",
             "badge": "角标文案",
@@ -55,6 +55,8 @@ class ProductForm(forms.ModelForm):
         }
 
         help_texts = {
+            "face_value": "填写充值卡或套餐的美元总面值，例如 30 代表 US$30。",
+            "price": "填写用户实际支付的人民币金额，例如 228.00。",
             "low_stock_threshold": "库存卡密商品低于这个数量时会出现在后台提醒中，填 0 表示不提醒。",
         }
 

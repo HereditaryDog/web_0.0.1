@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}商品管理 | {{ site_name }}{% endblock %}
 
@@ -44,7 +45,7 @@
                         <tr>
                             <th>商品</th>
                             <th>供货方式</th>
-                            <th>售价</th>
+                            <th>售价（人民币）</th>
                             <th>库存</th>
                             <th>提醒阈值</th>
                             <th>状态</th>
@@ -59,7 +60,7 @@
                                     <div class="muted">{{ product.slug }}</div>
                                 </td>
                                 <td>{{ product.get_delivery_method_display }}</td>
-                                <td>HK${{ product.price }}</td>
+                                <td>{{ product.price|cny }}</td>
                                 <td>{{ product.inventory_label }}</td>
                                 <td>{% if product.delivery_method == "stock_card" %}{{ product.low_stock_threshold }}{% else %}-{% endif %}</td>
                                 <td>{% if product.is_active %}上架{% else %}下架{% endif %}</td>

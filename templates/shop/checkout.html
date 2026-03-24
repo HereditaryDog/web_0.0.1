@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}订单结算 | {{ site_name }}{% endblock %}
 
@@ -20,12 +21,12 @@
                         <strong>{{ item.product_title }}</strong>
                         <p class="muted">数量 {{ item.quantity }}</p>
                     </div>
-                    <span>HK${{ item.line_total }}</span>
+                    <span>{{ item.line_total|cny }}</span>
                 </div>
             {% endfor %}
             <div class="row-line total-row">
                 <strong>合计</strong>
-                <strong>HK${{ order.total_amount }}</strong>
+                <strong>{{ order.total_amount|cny }}</strong>
             </div>
         </div>
         <div class="content-card soft">

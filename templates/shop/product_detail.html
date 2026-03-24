@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}{{ product.title }} | {{ site_name }}{% endblock %}
 
@@ -20,12 +21,12 @@
                 <p class="lead">{{ product.summary }}</p>
                 <div class="detail-facts">
                     <div class="detail-fact">
-                        <span>面值</span>
-                        <strong>HK${{ product.face_value }}</strong>
+                        <span>充值面值</span>
+                        <strong>{{ product.face_value|usd }}</strong>
                     </div>
                     <div class="detail-fact">
-                        <span>售价</span>
-                        <strong>HK${{ product.price }}</strong>
+                        <span>人民币售价</span>
+                        <strong>{{ product.price|cny }}</strong>
                     </div>
                     <div class="detail-fact">
                         <span>Token</span>
@@ -37,8 +38,8 @@
         <div class="detail-panel detail-panel--product">
             <div class="price-box price-box--detail">
                 <span class="eyebrow">Order Summary</span>
-                <strong>HK${{ product.price }}</strong>
-                <p class="muted">面值 HK${{ product.face_value }} / {{ product.token_amount }} tokens</p>
+                <strong>{{ product.price|cny }}</strong>
+                <p class="muted">充值面值 {{ product.face_value|usd }} / {{ product.token_amount }} tokens</p>
                 <div class="detail-chip-row">
                     <span class="detail-chip">{{ product.get_delivery_method_display }}</span>
                     <span class="detail-chip">{{ product.inventory_label }}</span>
@@ -55,9 +56,9 @@
                     <strong>发货方式</strong>
                     <p class="muted">
                         {% if product.delivery_method == "stock_card" %}
-                            支付成功后自动发出库存卡密，适合快速交付和即时使用。
+                            支付成功后自动发出库存充值卡，适合快速交付和即时使用。
                         {% else %}
-                            通过合作 API 自动供货，适合长期调用和高频补货。
+                            通过合作 API 自动供货，适合中高金额支付联调和持续补货。
                         {% endif %}
                     </p>
                 </div>
@@ -116,12 +117,12 @@
                             <p class="product-card__summary">{{ related.summary }}</p>
                             <dl class="product-specs">
                                 <div>
-                                    <dt>售价</dt>
-                                    <dd>HK${{ related.price }}</dd>
+                                    <dt>人民币售价</dt>
+                                    <dd>{{ related.price|cny }}</dd>
                                 </div>
                                 <div>
-                                    <dt>面值</dt>
-                                    <dd>HK${{ related.face_value }}</dd>
+                                    <dt>充值面值</dt>
+                                    <dd>{{ related.face_value|usd }}</dd>
                                 </div>
                                 <div>
                                     <dt>Token</dt>

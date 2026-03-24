@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}商家后台 | {{ site_name }}{% endblock %}
 
@@ -49,7 +50,7 @@
                                     <strong title="{{ order.order_no }}">{{ order.order_no }}</strong>
                                     <span>{{ order.user.username }}</span>
                                 </div>
-                                <strong class="order-summary-card__amount">HK${{ order.total_amount }}</strong>
+                                <strong class="order-summary-card__amount">{{ order.total_amount|cny }}</strong>
                             </div>
                             <div class="order-summary-card__bottom">
                                 <span class="pill">{{ order.get_status_display }}</span>

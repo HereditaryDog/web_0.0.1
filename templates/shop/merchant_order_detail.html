@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}订单详情 | {{ site_name }}{% endblock %}
 
@@ -23,7 +24,7 @@
                 <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
                 <div class="row-line"><span>支付渠道</span><strong>{{ order.payment_provider|default:"-" }}</strong></div>
                 <div class="row-line"><span>支付流水</span><strong>{{ order.payment_reference|default:"-" }}</strong></div>
-                <div class="row-line"><span>总金额</span><strong>HK${{ order.total_amount }}</strong></div>
+                <div class="row-line"><span>总金额</span><strong>{{ order.total_amount|cny }}</strong></div>
                 <div class="row-line"><span>商家备注</span><strong>{{ order.merchant_note|default:"-" }}</strong></div>
             </div>
 
@@ -32,7 +33,7 @@
                 {% for item in order.items.all %}
                     <div class="delivery-block">
                         <strong>{{ item.product_title }} x {{ item.quantity }}</strong>
-                        <div class="muted">单价 HK${{ item.unit_price }}</div>
+                        <div class="muted">单价 {{ item.unit_price|cny }}</div>
                         {% for delivery in item.deliveries.all %}
                             <div class="copy-row">
                                 <div class="delivery-code js-sensitive-output">{{ delivery.masked_display_code }}</div>

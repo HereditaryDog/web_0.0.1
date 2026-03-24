@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load shop_money %}
 
 {% block title %}账号中心 | {{ site_name }}{% endblock %}
 
@@ -99,7 +100,7 @@
                             <td>{% with first_item=order.items.all|first %}{{ first_item.product_title|default:"-" }}{% endwith %}</td>
                             <td>{{ order.get_status_display }}</td>
                             <td>{{ order.get_payment_status_display }}</td>
-                            <td>HK${{ order.total_amount }}</td>
+                            <td>{{ order.total_amount|cny }}</td>
                             <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
                             <td>
                                 <div class="table-actions">
@@ -114,7 +115,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="7">你还没有订单，先去首页挑一个点卡。</td>
+                            <td colspan="7">你还没有订单，先去首页挑一个充值卡或套餐。</td>
                         </tr>
                     {% endfor %}
                 </tbody>
