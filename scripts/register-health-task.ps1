@@ -1,8 +1,8 @@
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$scriptPath = Join-Path $projectRoot "scripts\sync-and-redeploy.ps1"
-$taskName = "web001-auto-sync"
+$scriptPath = Join-Path $projectRoot "scripts\check-server-health.ps1"
+$taskName = "web001-health-check"
 $taskCommand = "powershell.exe -ExecutionPolicy Bypass -File `"$scriptPath`""
 
 cmd.exe /c "schtasks.exe /Delete /TN $taskName /F >nul 2>&1" | Out-Null

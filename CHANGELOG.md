@@ -2,6 +2,34 @@
 
 本文件记录项目的可见版本变更。
 
+## 0.0.10 - 2026-03-24
+
+### Added
+
+- 新增 `check-server-health.ps1`，每次巡检会检查 Windows 服务、Docker 栈和公网隧道健康状态
+- 新增 `start-quick-tunnel.ps1`，可自动拉起并恢复 Cloudflare Quick Tunnel
+- 新增 `register-health-task.ps1`，用于注册每 30 分钟一次的健康检查任务
+- 新增人民币/美元格式化模板过滤器，统一前后台金额展示
+
+### Changed
+
+- 商品目录统一为“人民币售价 + 美元充值面值”的展示与命名方式
+- 支付测试商品调整为 1 / 5 / 10 / 30 / 50 / 100 美元充值卡和多档套餐
+- 启动脚本现在会在启动应用后顺手拉起公网 Quick Tunnel
+
+### Fixed
+
+- 修复 Docker + Waitress 模式下静态资源无法正常加载的问题
+- 修复本地 `SITE_BASE_URL` 干扰邮件测试断言的问题
+
+### Verified
+
+- `manage.py check`
+- `manage.py test accounts shop`
+- `http://127.0.0.1:8000/health/readiness/`
+- `http://127.0.0.1:8001/health/readiness/`
+- 当前公网 Quick Tunnel 可访问
+
 ## 0.0.9 - 2026-03-24
 
 ### Added

@@ -22,6 +22,8 @@ if ($dockerAvailable) {
     }
 
     docker @composeArgs
+    & "$projectRoot\scripts\start-quick-tunnel.ps1"
 } else {
     & "$projectRoot\scripts\install-web-service.ps1"
+    & "$projectRoot\scripts\start-quick-tunnel.ps1" -OriginUrl "http://127.0.0.1:8000"
 }
