@@ -280,7 +280,8 @@ class MerchantOperationsTests(TestCase):
         self.assertEqual(self.pending_order.status, Order.Status.FAILED)
         self.assertEqual(self.pending_order.merchant_note, "用户反馈订单异常。")
 
-    def test_merchant_can_resend_delivery_email(self):
+    @override_settings(SITE_BASE_URL="")
+    def test_merchant_can_resend_delivery_email_uses_request_host_when_public_base_url_not_configured(self):
         self.client.force_login(self.owner)
         delivered_code = DeliveryRecord.objects.get(order_item__order=self.completed_order).reveal_display_code()
         response = self.client.post(
@@ -299,6 +300,18 @@ class MerchantOperationsTests(TestCase):
                 order=self.completed_order,
             ).exists()
         )
+
+    @override_settings(SITE_BASE_URL="https://store.example.com")
+    def test_merchant_can_resend_delivery_email_uses_configured_public_base_url(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("shop:merchant_order_action", args=[self.completed_order.order_no]),
+            {"action": "resend_delivery"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("https://store.example.com/order-lookup/", mail.outbox[0].body)
+        self.assertIn("https://store.example.com/me/", mail.outbox[0].body)
 
     def test_product_filters_and_toggle_status(self):
         self.client.force_login(self.owner)
