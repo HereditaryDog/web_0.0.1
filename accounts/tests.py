@@ -146,6 +146,68 @@ class AccountAuthFlowTests(TestCase):
         )
         self.assertEqual(email_response.status_code, 302)
 
+    def test_customer_login_rejects_merchant_account(self):
+        User.objects.create_user(
+            username="merchant-user",
+            email="merchant@example.com",
+            phone="13800138088",
+            password="Merchant123!",
+            is_staff=True,
+            is_merchant=True,
+        )
+        client = Client()
+        session = client.session
+        session["login_captcha"] = "AB12"
+        session.save()
+
+        response = client.post(
+            reverse("accounts:login"),
+            {"username": "merchant-user", "password": "Merchant123!", "captcha": "AB12"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "商家账号请前往商家登录页")
+
+    def test_merchant_login_rejects_normal_user_account(self):
+        User.objects.create_user(
+            username="normal-user",
+            email="normal@example.com",
+            phone="13800138089",
+            password="Buyer123!",
+            email_verified=True,
+        )
+        client = Client()
+        session = client.session
+        session["login_captcha"] = "EF56"
+        session.save()
+
+        response = client.post(
+            reverse("accounts:merchant_login"),
+            {"username": "normal-user", "password": "Buyer123!", "captcha": "EF56"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "该账号不是商家账号，请使用普通用户登录页")
+
+    def test_merchant_login_supports_merchant_account(self):
+        User.objects.create_user(
+            username="merchant-owner",
+            email="merchant-owner@example.com",
+            phone="13800138090",
+            password="Merchant123!",
+            is_staff=True,
+            is_merchant=True,
+        )
+        client = Client()
+        session = client.session
+        session["login_captcha"] = "GH78"
+        session.save()
+
+        response = client.post(
+            reverse("accounts:merchant_login"),
+            {"username": "merchant-owner", "password": "Merchant123!", "captcha": "GH78"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("shop:merchant_dashboard"))
+
     def test_login_rejects_invalid_captcha(self):
         User.objects.create_user(
             username="buyer",
@@ -181,6 +243,13 @@ class AccountAuthFlowTests(TestCase):
         response = self.client.get(reverse("accounts:login"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("password_reset"))
+        self.assertContains(response, reverse("accounts:merchant_login"))
+
+    def test_merchant_login_page_renders_independent_copy(self):
+        response = self.client.get(reverse("accounts:merchant_login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "登录商家后台")
+        self.assertContains(response, "返回商城登录")
 
     def test_password_reset_request_sends_email(self):
         User.objects.create_user(

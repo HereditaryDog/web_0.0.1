@@ -175,6 +175,43 @@ def _payment_gateway_check():
     )
 
 
+def _stripe_checkout_check():
+    if not settings.PAYMENT_ENABLE_STRIPE_GATEWAY:
+        return ReadinessCheck(
+            key="stripe_checkout",
+            label="Stripe 实时支付",
+            status="warn",
+            detail="Stripe 支付未启用。",
+        )
+    if not settings.STRIPE_SECRET_KEY:
+        return ReadinessCheck(
+            key="stripe_checkout",
+            label="Stripe 实时支付",
+            status="warn",
+            detail="缺少 STRIPE_SECRET_KEY，无法创建真实 Checkout Session。",
+        )
+    if not settings.SITE_BASE_URL:
+        return ReadinessCheck(
+            key="stripe_checkout",
+            label="Stripe 实时支付",
+            status="warn",
+            detail="SITE_BASE_URL 为空，Stripe 成功/取消回跳地址不稳定。",
+        )
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        return ReadinessCheck(
+            key="stripe_checkout",
+            label="Stripe 实时支付",
+            status="warn",
+            detail="缺少 STRIPE_WEBHOOK_SECRET，真实支付后的 webhook 无法安全验签。",
+        )
+    return ReadinessCheck(
+        key="stripe_checkout",
+        label="Stripe 实时支付",
+        status="pass",
+        detail=f"currency={settings.STRIPE_CURRENCY}",
+    )
+
+
 def _partner_api_check():
     if settings.PARTNER_API_BASE_URL and settings.PARTNER_API_KEY:
         return ReadinessCheck(
@@ -200,6 +237,7 @@ def run_readiness_checks():
         _site_base_url_check(),
         _email_check(),
         _payment_gateway_check(),
+        _stripe_checkout_check(),
         _partner_api_check(),
     ]
 

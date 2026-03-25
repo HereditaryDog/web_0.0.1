@@ -19,6 +19,7 @@ from django.views.generic import CreateView
 
 from .forms import (
     AccountLoginForm,
+    MerchantLoginForm,
     AccountPasswordChangeForm,
     AccountPasswordResetForm,
     AccountSetPasswordForm,
@@ -66,6 +67,30 @@ class AccountLoginView(LoginView):
     def get(self, request, *args, **kwargs):
         refresh_login_captcha(request)
         return super().get(request, *args, **kwargs)
+
+
+class MerchantLoginView(LoginView):
+    template_name = "registration/merchant_login.html"
+    authentication_form = MerchantLoginForm
+    redirect_authenticated_user = True
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["site_name"] = settings.SITE_NAME
+        context["project_version"] = settings.PROJECT_VERSION
+        context["captcha_value"] = get_login_captcha(self.request)
+        return context
+
+    def form_invalid(self, form):
+        refresh_login_captcha(self.request)
+        return super().form_invalid(form)
+
+    def get(self, request, *args, **kwargs):
+        refresh_login_captcha(request)
+        return super().get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return self.get_redirect_url() or reverse_lazy("shop:merchant_dashboard")
 
 
 class AccountPasswordResetView(PasswordResetView):

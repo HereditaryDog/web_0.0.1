@@ -33,8 +33,14 @@
             <h3>支付方式</h3>
             <p class="muted">
                 当前支付层已经升级成多通道网关架构。
-                现在默认可用的是已配置通道，支付宝、微信、USDT、银行卡这些接口也已经预留好。
+                如果 Stripe 已配置完成，这里会直接进入真实的 Stripe Checkout 收款页；其它通道仍保持预留状态。
             </p>
+            {% if default_payment_gateway == "stripe" %}
+                <div class="notice-card">
+                    <strong>Stripe 实时支付已启用</strong>
+                    <p class="muted">支付成功后会优先依赖 Stripe webhook 更新订单状态，成功页回跳仅作为补充校验。</p>
+                </div>
+            {% endif %}
             {% if order.payment_status == "paid" %}
                 <a class="primary-button full-width" href="{% url 'shop:order_detail' order.order_no %}">查看订单结果</a>
             {% else %}

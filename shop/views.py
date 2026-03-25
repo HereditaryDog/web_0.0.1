@@ -33,7 +33,6 @@ from .models import (
     HelpArticle,
     InventoryImportBatch,
     Order,
-    PaymentAttempt,
     Product,
     ProductCategory,
     SensitiveOperationLog,
@@ -50,12 +49,20 @@ from .security import (
     load_guest_order_access_token,
     mask_secret,
 )
-from .services.order_flow import create_single_item_order, mark_order_paid, retry_order_fulfillment
+from .services.order_flow import (
+    create_single_item_order,
+    mark_order_checkout_created,
+    mark_order_paid,
+    mark_order_payment_failed,
+    retry_order_fulfillment,
+)
 from .services.payment import (
     create_checkout_session,
     get_default_gateway_code,
     list_active_payment_gateways,
     list_reserved_payment_gateways,
+    PaymentGatewayError,
+    PaymentGatewayUnavailable,
     verify_payment_callback,
 )
 
@@ -71,6 +78,18 @@ def is_paid_checkout_session_for_order(order, checkout_data, *, session_id=""):
         return False
     metadata = checkout_data.get("metadata") or {}
     return metadata.get("order_no") == order.order_no
+
+
+def load_order_from_checkout_metadata(session_payload):
+    metadata = session_payload.get("metadata") or {}
+    order_no = metadata.get("order_no")
+    order_id = metadata.get("order_id")
+    if not order_no:
+        return None
+    queryset = Order.objects.filter(order_no=order_no)
+    if order_id:
+        queryset = queryset.filter(pk=order_id)
+    return queryset.first()
 
 
 def log_sensitive_operation(request, action, *, order=None, card_code=None, delivery_record=None, note="", metadata=None):
@@ -176,6 +195,8 @@ def append_support_message(ticket, *, sender=None, sender_role, body, status, as
 
 
 class MerchantRequiredMixin(UserPassesTestMixin):
+    login_url = reverse_lazy("accounts:merchant_login")
+
     def test_func(self):
         return is_merchant_user(self.request.user)
 
@@ -280,30 +301,18 @@ class StartPaymentView(LoginRequiredMixin, View):
         provider_code = request.POST.get("provider", "").strip()
         try:
             session = create_checkout_session(order, request, provider_code=provider_code)
-        except ValueError:
+        except PaymentGatewayUnavailable:
             messages.error(request, "当前选择的支付通道尚未启用，请更换其它支付方式。")
             return redirect("shop:checkout", order_no=order.order_no)
-
-        order.payment_provider = session.provider
-        order.payment_reference = session.reference
-        order.checkout_url = session.redirect_url
-        order.payment_status = Order.PaymentStatus.CHECKOUT_CREATED
-        order.save(
-            update_fields=[
-                "payment_provider",
-                "payment_reference",
-                "checkout_url",
-                "payment_status",
-                "updated_at",
-            ]
-        )
-
-        PaymentAttempt.objects.create(
-            order=order,
+        except PaymentGatewayError as exc:
+            messages.error(request, str(exc))
+            return redirect("shop:checkout", order_no=order.order_no)
+        order = mark_order_checkout_created(
+            order,
             provider=session.provider,
             reference=session.reference,
             checkout_url=session.redirect_url,
-            raw_payload=session.raw_payload,
+            payload=session.raw_payload,
         )
         return redirect(session.redirect_url)
 
@@ -1058,13 +1067,16 @@ class StripeWebhookView(View):
         if not checkout_data:
             return HttpResponseBadRequest("invalid payload")
 
-        if checkout_data.get("type") == "checkout.session.completed":
+        if checkout_data.get("type") in {"checkout.session.completed", "checkout.session.async_payment_succeeded"}:
             session = checkout_data["data"]["object"]
-            order_no = session.get("metadata", {}).get("order_no")
-            if order_no:
-                order = Order.objects.filter(order_no=order_no).first()
-                if order and is_paid_checkout_session_for_order(order, session, session_id=session.get("id", "")):
-                    mark_order_paid(order, provider="stripe", reference=session["id"], payload=session)
+            order = load_order_from_checkout_metadata(session)
+            if order and is_paid_checkout_session_for_order(order, session, session_id=session.get("id", "")):
+                mark_order_paid(order, provider="stripe", reference=session["id"], payload=session)
+        elif checkout_data.get("type") in {"checkout.session.async_payment_failed", "checkout.session.expired"}:
+            session = checkout_data["data"]["object"]
+            order = load_order_from_checkout_metadata(session)
+            if order and order.payment_status != Order.PaymentStatus.PAID:
+                mark_order_payment_failed(order, provider="stripe", reference=session.get("id", ""), payload=session)
         return HttpResponse(status=200)
 
 

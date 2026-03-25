@@ -14,6 +14,7 @@ from shop.models import (
     HelpArticle,
     InventoryImportBatch,
     Order,
+    PaymentAttempt,
     Product,
     ProductCategory,
     SensitiveOperationLog,
@@ -21,7 +22,7 @@ from shop.models import (
     SupportTicket,
     SupportTicketMessage,
 )
-from shop.services.order_flow import create_single_item_order, mark_order_paid
+from shop.services.order_flow import create_single_item_order, mark_order_checkout_created, mark_order_paid
 from shop.services.payment import get_default_gateway_code, list_active_payment_gateways, list_reserved_payment_gateways
 
 
@@ -247,6 +248,72 @@ class StoreOrderFlowTests(TestCase):
         self.assertEqual(order.status, Order.Status.PENDING_PAYMENT)
         self.assertEqual(DeliveryRecord.objects.filter(order_item__order=order).count(), 0)
 
+    @override_settings(
+        PAYMENT_ENABLE_MOCK_GATEWAY=False,
+        PAYMENT_ENABLE_STRIPE_GATEWAY=True,
+        STRIPE_SECRET_KEY="sk_test_123",
+        STRIPE_CURRENCY="cny",
+        SITE_BASE_URL="https://pay.example.com",
+    )
+    @patch("shop.services.payment.stripe.checkout.Session.create")
+    def test_stripe_checkout_session_uses_public_base_url_currency_and_customer_email(self, mock_create):
+        mock_session = mock_create.return_value
+        mock_session.id = "cs_test_123"
+        mock_session.url = "https://checkout.stripe.com/pay/cs_test_123"
+        mock_session.to_dict.return_value = {"id": "cs_test_123"}
+
+        client = Client()
+        self.assertTrue(client.login(username="buyer", password="Buyer123!"))
+        client.post(reverse("shop:create_order", args=[self.product.slug]), {"quantity": 1})
+        order = Order.objects.get(user=self.buyer)
+
+        response = client.post(reverse("shop:start_payment", args=[order.order_no]), {"provider": "stripe"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "https://checkout.stripe.com/pay/cs_test_123")
+
+        _, kwargs = mock_create.call_args
+        self.assertEqual(kwargs["success_url"], "https://pay.example.com/orders/%s/success/?session_id={CHECKOUT_SESSION_ID}" % order.order_no)
+        self.assertEqual(kwargs["cancel_url"], "https://pay.example.com/orders/%s/cancel/" % order.order_no)
+        self.assertEqual(kwargs["customer_email"], self.buyer.email)
+        self.assertEqual(kwargs["line_items"][0]["price_data"]["currency"], "cny")
+        self.assertEqual(kwargs["metadata"]["order_no"], order.order_no)
+        self.assertEqual(kwargs["client_reference_id"], order.order_no)
+
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.CHECKOUT_CREATED)
+        attempt = PaymentAttempt.objects.get(order=order, provider="stripe", reference="cs_test_123")
+        self.assertEqual(attempt.status, PaymentAttempt.Status.CREATED)
+
+    def test_stripe_webhook_async_payment_failed_marks_order_unpaid(self):
+        order = create_single_item_order(self.buyer, self.product, 1)
+        order = mark_order_checkout_created(
+            order,
+            provider="stripe",
+            reference="cs_failed_123",
+            checkout_url="https://checkout.stripe.com/pay/cs_failed_123",
+            payload={"id": "cs_failed_123"},
+        )
+
+        event_payload = {
+            "type": "checkout.session.async_payment_failed",
+            "data": {
+                "object": {
+                    "id": "cs_failed_123",
+                    "metadata": {"order_no": order.order_no, "order_id": order.id},
+                }
+            },
+        }
+
+        with patch("shop.views.verify_payment_callback", return_value=event_payload):
+            response = self.client.post(reverse("shop:stripe_webhook"), data=b"{}", content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
+        self.assertEqual(order.status, Order.Status.PENDING_PAYMENT)
+        attempt = PaymentAttempt.objects.get(order=order, provider="stripe", reference="cs_failed_123")
+        self.assertEqual(attempt.status, PaymentAttempt.Status.FAILED)
+
     def test_authenticated_storefront_shows_account_center_entry(self):
         client = Client()
         self.assertTrue(client.login(username="buyer", password="Buyer123!"))
@@ -287,12 +354,24 @@ class MerchantDashboardTests(TestCase):
         client = Client()
         response = client.get(reverse("shop:merchant_dashboard"))
         self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("accounts:merchant_login"), response.url)
 
         self.assertTrue(client.login(username="owner", password="ChangeMe123!"))
         self.assertEqual(client.get(reverse("shop:merchant_dashboard")).status_code, 200)
         self.assertEqual(client.get(reverse("shop:merchant_products")).status_code, 200)
         self.assertEqual(client.get(reverse("shop:merchant_inventory")).status_code, 200)
         self.assertEqual(client.get(reverse("shop:merchant_orders")).status_code, 200)
+
+    def test_authenticated_normal_user_cannot_access_merchant_dashboard(self):
+        buyer = User.objects.create_user(
+            username="buyer-normal",
+            password="Buyer123!",
+            email="buyer-normal@example.com",
+        )
+        client = Client()
+        self.assertTrue(client.login(username="buyer-normal", password="Buyer123!"))
+        response = client.get(reverse("shop:merchant_dashboard"))
+        self.assertEqual(response.status_code, 403)
 
 
 @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
@@ -650,11 +729,26 @@ class ReadinessChecksTests(TestCase):
         PAYMENT_ENABLE_MOCK_GATEWAY=False,
         PAYMENT_ENABLE_STRIPE_GATEWAY=True,
         STRIPE_SECRET_KEY="sk_test_123",
+        STRIPE_WEBHOOK_SECRET="whsec_123",
     )
     def test_readiness_checks_can_report_external_test_ready(self):
         result = run_readiness_checks()
         self.assertTrue(result["ok"])
         self.assertTrue(result["external_user_test_ready"])
+
+    @override_settings(
+        DEBUG=False,
+        SITE_BASE_URL="https://staging.example.com",
+        PAYMENT_ENABLE_MOCK_GATEWAY=False,
+        PAYMENT_ENABLE_STRIPE_GATEWAY=True,
+        STRIPE_SECRET_KEY="sk_test_123",
+        STRIPE_WEBHOOK_SECRET="",
+    )
+    def test_readiness_checks_warn_when_stripe_webhook_secret_missing(self):
+        result = run_readiness_checks()
+        stripe_check = next(check for check in result["checks"] if check["key"] == "stripe_checkout")
+        self.assertEqual(stripe_check["status"], "warn")
+        self.assertIn("STRIPE_WEBHOOK_SECRET", stripe_check["detail"])
 
     def test_readiness_endpoint_returns_json(self):
         response = self.client.get(reverse("shop:readiness"))

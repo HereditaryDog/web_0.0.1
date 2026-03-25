@@ -2,7 +2,7 @@
 
 ## 版本号
 
-当前版本：`0.1.3`
+当前版本：`0.1.4`
 
 ## 项目介绍
 
@@ -14,7 +14,7 @@
 ### 前端
 
 - 已完成：首页、商品列表、商品详情、下单结算、订单查询、帮助中心、账号中心、密码找回
-- 已完成：商家后台总览、商品管理、库存管理、订单管理
+- 已完成：商家后台总览、商品管理、库存管理、订单管理、独立商家登录页
 - 当前状态：基础流程可完整测试，视觉和移动端仍可继续优化
 
 ### 后端
@@ -24,7 +24,7 @@
 - 已完成：商家后台搜索、筛选、上下架、库存导入预览、导入历史、再次购买等功能
 - 已完成：卡密与发货内容应用层加密、敏感操作审计、后台可选 IP 白名单
 - 已完成：上线预检命令、就绪检查接口、本地服务器运行脚本、自动同步脚本
-- 当前状态：本地模拟支付可用，真实支付网关和真实供应 API 还未正式接入
+- 当前状态：本地模拟支付可用，Stripe 真实支付第一阶段已接入，真实供应 API 仍未正式接入
 
 ## 如何使用
 
@@ -51,6 +51,7 @@ python manage.py preflight_check
 - 首页：`http://127.0.0.1:8000/`
 - 注册：`http://127.0.0.1:8000/accounts/signup/`
 - 登录：`http://127.0.0.1:8000/accounts/login/`
+- 商家登录：`http://127.0.0.1:8000/accounts/merchant/login/`
 - 账号中心：`http://127.0.0.1:8000/me/`
 - 商家后台：`http://127.0.0.1:8000/dashboard/`
 
@@ -70,16 +71,55 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_HOST_USER=your@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_CURRENCY=cny
 ```
 
 说明：
 
 - `SITE_BASE_URL`：用于密码找回邮件、提醒邮件等外部链接生成
 - `CARD_SECRET_KEY`：用于卡密库存和发货内容加密，生产环境建议单独配置
+- `STRIPE_SECRET_KEY`：启用真实 Stripe Checkout 所需的服务端密钥
+- `STRIPE_WEBHOOK_SECRET`：用于校验 Stripe webhook，真实支付上线时建议必配
+- `STRIPE_CURRENCY`：Stripe Checkout 实际结算币种，默认是 `cny`，如你的 Stripe 账户不支持可改成账户支持的币种
+
+### 4. Stripe 真实支付接入
+
+如果要把站点从 mock 支付切到真实 Stripe，至少需要：
+
+```env
+PAYMENT_ENABLE_MOCK_GATEWAY=false
+PAYMENT_ENABLE_STRIPE_GATEWAY=true
+SITE_BASE_URL=https://your-domain.example
+STRIPE_SECRET_KEY=sk_live_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_CURRENCY=cny
+```
+
+然后在 Stripe 后台把 webhook 指到：
+
+```text
+https://your-domain.example/webhooks/stripe/
+```
+
+建议订阅这些事件：
+
+- `checkout.session.completed`
+- `checkout.session.async_payment_succeeded`
+- `checkout.session.async_payment_failed`
+- `checkout.session.expired`
 
 ## 更新日志
 
 完整记录见 [CHANGELOG.md](CHANGELOG.md)
+
+### 0.1.4
+
+- 新增独立商家登录页，商家账号不再和普通用户账号共用登录入口
+- Stripe 真实支付第一阶段接入完成，支持更完整的 Checkout / webhook 状态同步
+- 结算页、环境变量与就绪检查继续补齐真实支付上线所需配置
+- 当前全量测试已通过
 
 ### 0.1.3
 

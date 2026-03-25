@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from urllib.parse import urljoin
 
 import stripe
 from django.conf import settings
@@ -24,6 +25,20 @@ class CheckoutSession:
     redirect_url: str
     raw_payload: dict
     display_name: str
+
+
+class PaymentGatewayError(Exception):
+    pass
+
+
+class PaymentGatewayUnavailable(PaymentGatewayError):
+    pass
+
+
+def _public_absolute_url(request, path):
+    if settings.SITE_BASE_URL:
+        return urljoin(f"{settings.SITE_BASE_URL}/", path.lstrip("/"))
+    return request.build_absolute_uri(path)
 
 
 class BasePaymentGateway(ABC):
@@ -95,25 +110,38 @@ class StripeGateway(BasePaymentGateway):
 
     def create_checkout_session(self, order, request):
         stripe.api_key = settings.STRIPE_SECRET_KEY
-        success_url = request.build_absolute_uri(reverse("shop:payment_success", args=[order.order_no]))
-        cancel_url = request.build_absolute_uri(reverse("shop:payment_cancel", args=[order.order_no]))
-        session = stripe.checkout.Session.create(
-            mode="payment",
-            success_url=f"{success_url}?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=cancel_url,
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": "hkd",
-                        "unit_amount": int(item.unit_price * 100),
-                        "product_data": {"name": item.product_title},
-                    },
-                    "quantity": item.quantity,
-                }
-                for item in order.items.all()
-            ],
-            metadata={"order_no": order.order_no},
-        )
+        success_url = _public_absolute_url(request, reverse("shop:payment_success", args=[order.order_no]))
+        cancel_url = _public_absolute_url(request, reverse("shop:payment_cancel", args=[order.order_no]))
+        metadata = {
+            "order_no": order.order_no,
+            "order_id": str(order.id),
+            "site_name": settings.SITE_NAME,
+        }
+        try:
+            session = stripe.checkout.Session.create(
+                mode="payment",
+                success_url=f"{success_url}?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=cancel_url,
+                customer_email=order.contact_email or order.user.email,
+                billing_address_collection="auto",
+                client_reference_id=order.order_no,
+                line_items=[
+                    {
+                        "price_data": {
+                            "currency": settings.STRIPE_CURRENCY,
+                            "unit_amount": int(item.unit_price * 100),
+                            "product_data": {"name": item.product_title},
+                        },
+                        "quantity": item.quantity,
+                    }
+                    for item in order.items.all()
+                ],
+                metadata=metadata,
+                payment_intent_data={"metadata": metadata},
+            )
+        except stripe.StripeError as exc:
+            message = getattr(exc, "user_message", "") or "Stripe Checkout 创建失败，请稍后重试。"
+            raise PaymentGatewayError(message) from exc
         return CheckoutSession(
             provider=self.code,
             reference=session.id,
@@ -232,7 +260,7 @@ def get_gateway(code=""):
     gateway_code = (code or get_default_gateway_code()).strip()
     gateway = _gateway_registry().get(gateway_code)
     if not gateway or not gateway.is_available():
-        raise ValueError(f"Payment gateway {gateway_code} is not available.")
+        raise PaymentGatewayUnavailable(f"Payment gateway {gateway_code} is not available.")
     return gateway
 
 

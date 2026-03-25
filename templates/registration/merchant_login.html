@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}登录 | {{ site_name }}{% endblock %}
+{% block title %}商家登录 | {{ site_name }}{% endblock %}
 
 {% block content %}
 <section class="auth-shell">
     <div class="auth-card">
-        <p class="eyebrow">Welcome back</p>
-        <h1>登录商城账号</h1>
-        <p class="muted">使用用户名或邮箱地址登录，并输入验证码完成人机验证。</p>
+        <p class="eyebrow">Merchant Access</p>
+        <h1>登录商家后台</h1>
+        <p class="muted">仅商家账号可从这里进入后台。普通用户账号请返回商城登录页。</p>
         <form method="post" class="form-grid">
             {% csrf_token %}
             {{ form.non_field_errors }}
@@ -28,11 +28,9 @@
                     {% endif %}
                 </label>
             {% endfor %}
-            <button type="submit" class="primary-button">登录</button>
+            <button type="submit" class="primary-button">进入商家后台</button>
         </form>
-        <p class="muted">忘记密码？<a href="{% url 'password_reset' %}">通过邮箱找回</a></p>
-        <p class="muted">商家账号？<a href="{% url 'accounts:merchant_login' %}">前往商家登录页</a></p>
-        <p class="muted">还没有账号？<a href="{% url 'accounts:signup' %}">去注册</a></p>
+        <p class="muted">普通用户？<a href="{% url 'accounts:login' %}">返回商城登录</a></p>
     </div>
 </section>
 

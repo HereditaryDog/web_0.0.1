@@ -76,6 +76,8 @@ class AccountLoginForm(AuthenticationForm):
         "invalid_login": "账号或密码不正确，请重新输入。",
         "invalid_captcha": "验证码不正确，请重新输入。",
         "inactive": "该账号已被停用。",
+        "merchant_account": "商家账号请前往商家登录页。",
+        "non_merchant_account": "该账号不是商家账号，请使用普通用户登录页。",
     }
 
     def __init__(self, request=None, *args, **kwargs):
@@ -103,6 +105,24 @@ class AccountLoginForm(AuthenticationForm):
                 )
             self.confirm_login_allowed(self.user_cache)
         return cleaned_data
+
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        if user.is_staff or user.is_superuser or user.is_merchant:
+            raise forms.ValidationError(
+                self.error_messages["merchant_account"],
+                code="merchant_account",
+            )
+
+
+class MerchantLoginForm(AccountLoginForm):
+    def confirm_login_allowed(self, user):
+        AuthenticationForm.confirm_login_allowed(self, user)
+        if not (user.is_staff or user.is_superuser or user.is_merchant):
+            raise forms.ValidationError(
+                self.error_messages["non_merchant_account"],
+                code="non_merchant_account",
+            )
 
 
 class AccountPasswordResetForm(PasswordResetForm):

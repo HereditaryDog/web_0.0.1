@@ -2,6 +2,31 @@
 
 本文件记录项目的可见版本变更。
 
+## 0.1.4 - 2026-03-25
+
+### Added
+
+- 新增独立的商家登录页 `/accounts/merchant/login/`，商家后台匿名访问会直接跳转到商家登录
+- 新增 Stripe 真实支付第一阶段支持，包括更完整的 Checkout 元数据、回调地址、失败/过期 webhook 处理与支付状态同步
+- 新增商家登录、Stripe Checkout 创建参数、Stripe webhook 失败分支与就绪检查的回归测试
+
+### Changed
+
+- 普通用户登录页与商家登录页正式拆分，商家账号不再与普通用户账号共用同一个登录入口
+- 结算页文案改为真实 Stripe Checkout 导向，配置完成后可直接进入真实支付页面
+- 就绪检查新增 Stripe 关键配置校验，要求关注 `SITE_BASE_URL` 与 `STRIPE_WEBHOOK_SECRET`
+
+### Fixed
+
+- 修复商家账号仍可从普通用户登录页尝试登录的问题
+- 修复 Stripe Checkout 仅处理成功场景、未覆盖失败/过期 webhook 的问题
+- 修复支付创建、支付成功、支付失败三种状态在 `PaymentAttempt` 中不同步的问题
+
+### Verified
+
+- `manage.py check`
+- `manage.py test`
+
 ## 0.1.3 - 2026-03-25
 
 ### Added

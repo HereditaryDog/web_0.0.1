@@ -34,6 +34,83 @@ def create_single_item_order(user, product, quantity):
     return order
 
 
+def _upsert_payment_attempt(order, provider, reference, *, status, payload=None, checkout_url=""):
+    attempt, _ = PaymentAttempt.objects.update_or_create(
+        order=order,
+        provider=provider,
+        reference=reference,
+        defaults={
+            "status": status,
+            "checkout_url": checkout_url,
+            "raw_payload": payload or {},
+        },
+    )
+    return attempt
+
+
+def mark_order_checkout_created(order, provider, reference, checkout_url, payload=None):
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        if locked_order.payment_status == Order.PaymentStatus.PAID:
+            return locked_order
+
+        locked_order.status = Order.Status.PENDING_PAYMENT
+        locked_order.payment_status = Order.PaymentStatus.CHECKOUT_CREATED
+        locked_order.payment_provider = provider
+        locked_order.payment_reference = reference
+        locked_order.checkout_url = checkout_url
+        locked_order.save(
+            update_fields=[
+                "status",
+                "payment_status",
+                "payment_provider",
+                "payment_reference",
+                "checkout_url",
+                "updated_at",
+            ]
+        )
+        _upsert_payment_attempt(
+            locked_order,
+            provider,
+            reference,
+            status=PaymentAttempt.Status.CREATED,
+            payload=payload,
+            checkout_url=checkout_url,
+        )
+        return locked_order
+
+
+def mark_order_payment_failed(order, provider, reference, payload=None):
+    with transaction.atomic():
+        locked_order = Order.objects.select_for_update().get(pk=order.pk)
+        if locked_order.payment_status == Order.PaymentStatus.PAID:
+            return locked_order
+
+        locked_order.status = Order.Status.PENDING_PAYMENT
+        locked_order.payment_status = Order.PaymentStatus.UNPAID
+        locked_order.payment_provider = provider
+        locked_order.payment_reference = reference
+        locked_order.checkout_url = ""
+        locked_order.save(
+            update_fields=[
+                "status",
+                "payment_status",
+                "payment_provider",
+                "payment_reference",
+                "checkout_url",
+                "updated_at",
+            ]
+        )
+        _upsert_payment_attempt(
+            locked_order,
+            provider,
+            reference,
+            status=PaymentAttempt.Status.FAILED,
+            payload=payload,
+        )
+        return locked_order
+
+
 def _mark_payment_received(order_id, provider, reference, payload):
     with transaction.atomic():
         order = Order.objects.select_for_update().get(pk=order_id)
@@ -44,6 +121,7 @@ def _mark_payment_received(order_id, provider, reference, payload):
         order.payment_status = Order.PaymentStatus.PAID
         order.payment_provider = provider
         order.payment_reference = reference
+        order.checkout_url = ""
         order.paid_at = timezone.now()
         order.save(
             update_fields=[
@@ -51,17 +129,18 @@ def _mark_payment_received(order_id, provider, reference, payload):
                 "payment_status",
                 "payment_provider",
                 "payment_reference",
+                "checkout_url",
                 "paid_at",
                 "updated_at",
             ]
         )
 
-        PaymentAttempt.objects.create(
-            order=order,
-            provider=provider,
-            reference=reference,
+        _upsert_payment_attempt(
+            order,
+            provider,
+            reference,
             status=PaymentAttempt.Status.PAID,
-            raw_payload=payload or {},
+            payload=payload,
         )
         return order
 
