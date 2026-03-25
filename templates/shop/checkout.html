@@ -5,12 +5,14 @@
 
 {% block content %}
 <section class="content-card">
-    <div class="section-heading">
-        <div>
+    <div class="order-detail-hero">
+        <div class="order-detail-hero__copy">
             <p class="eyebrow">Checkout</p>
-            <h1>订单 {{ order.order_no }}</h1>
+            <h1 class="order-detail-hero__order-no">订单 {{ order.order_no }}</h1>
         </div>
-        <span class="pill">{{ order.get_status_display }}</span>
+        <div class="order-detail-hero__actions">
+            <span class="pill">{{ order.get_status_display }}</span>
+        </div>
     </div>
     <div class="checkout-layout">
         <div class="content-card soft">

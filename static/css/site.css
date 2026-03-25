@@ -2393,6 +2393,45 @@ tbody tr:hover td {
     padding: 8px 14px;
 }
 
+.order-detail-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 20px;
+    align-items: start;
+    margin: 8px 0 24px;
+}
+
+.order-detail-hero__copy {
+    min-width: 0;
+}
+
+.order-detail-hero__copy .eyebrow {
+    margin-bottom: 10px;
+}
+
+.order-detail-hero__order-no {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(2rem, 4.6vw, 4.2rem);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.order-detail-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    max-width: 320px;
+}
+
+.order-detail-hero__actions form {
+    margin: 0;
+}
+
 @keyframes ui-rise-in {
     from {
         opacity: 0;
@@ -2446,6 +2485,15 @@ tbody tr:hover td {
     .site-nav {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .order-detail-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .order-detail-hero__actions {
+        justify-content: flex-start;
+        max-width: none;
     }
 
     .site-nav form,

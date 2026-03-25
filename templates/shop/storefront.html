@@ -15,9 +15,6 @@
                 </div>
                 <form method="get" class="search-bar search-bar--hero">
                     <input type="text" name="q" value="{{ keyword }}" placeholder="搜索商品名称、摘要或关键词">
-                    {% if current_category %}
-                        <input type="hidden" name="category" value="{{ current_category }}">
-                    {% endif %}
                     <button type="submit" class="primary-button">搜索</button>
                 </form>
             </div>
@@ -38,7 +35,7 @@
     <section class="product-section" id="products">
         <div class="section-intro">
             <p class="eyebrow">Products</p>
-            <h2>{% if current_category %}分类商品{% else %}全部在售商品{% endif %}</h2>
+            <h2>全部在售商品</h2>
             <p class="muted product-section__lead">用更聚焦的陈列方式展示商品，帮助你更快比较美元面值、人民币售价、库存和供货方式。</p>
         </div>
         <div class="product-grid product-grid--apple">

@@ -5,12 +5,12 @@
 
 {% block content %}
 <section class="content-card">
-    <div class="section-heading">
-        <div>
+    <div class="order-detail-hero">
+        <div class="order-detail-hero__copy">
             <p class="eyebrow">Order Detail</p>
-            <h1>{{ order.order_no }}</h1>
+            <h1 class="order-detail-hero__order-no">{{ order.order_no }}</h1>
         </div>
-        <div class="table-actions">
+        <div class="order-detail-hero__actions">
             <span class="pill">{{ order.get_status_display }}</span>
             <button type="button" class="ghost-button js-copy-trigger" data-copy-text="{{ order.order_no }}">复制订单号</button>
             <form method="post" action="{% url 'shop:reorder' order.order_no %}">

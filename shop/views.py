@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core import signing
 from django.core.mail import send_mail
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -217,27 +217,18 @@ class StorefrontView(ListView):
     def get_queryset(self):
         queryset = Product.objects.filter(is_active=True).select_related("category")
         keyword = self.request.GET.get("q", "").strip()
-        category_slug = self.request.GET.get("category", "").strip()
         if keyword:
             queryset = queryset.filter(
                 Q(title__icontains=keyword)
                 | Q(summary__icontains=keyword)
                 | Q(description__icontains=keyword)
             )
-        if category_slug:
-            queryset = queryset.filter(category__slug=category_slug)
         return queryset.order_by("-is_featured", "price")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["categories"] = ProductCategory.objects.filter(is_active=True).annotate(
-            active_product_count=Count("products", filter=Q(products__is_active=True))
-        )
         context["announcements"] = SiteAnnouncement.objects.filter(is_active=True)[:5]
-        context["featured_articles"] = HelpArticle.objects.filter(is_published=True, is_featured=True)[:4]
-        context["current_category"] = self.request.GET.get("category", "").strip()
         context["keyword"] = self.request.GET.get("q", "").strip()
-        context["lookup_form"] = GuestOrderLookupForm()
         return context
 
 

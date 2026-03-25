@@ -74,10 +74,30 @@ class StoreOrderFlowTests(TestCase):
         client = Client()
         response = client.get(reverse("shop:storefront"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "测试分类")
         self.assertContains(response, "测试公告")
         self.assertContains(response, "浏览商品")
-        self.assertContains(response, "按分类快速浏览")
+        self.assertContains(response, "全部在售商品")
+        self.assertNotContains(response, 'name="category"')
+
+    def test_storefront_ignores_category_query_after_category_browser_removed(self):
+        other_category = ProductCategory.objects.create(name="其它分类", slug="other-category")
+        other_product = Product.objects.create(
+            category=other_category,
+            title="Other Card",
+            slug="other-card",
+            summary="其他商品",
+            description="其他商品详情",
+            face_value="30.00",
+            token_amount=3000000,
+            price="188.00",
+            delivery_method=Product.DeliveryMethod.PARTNER_API,
+            is_active=True,
+        )
+
+        response = self.client.get(reverse("shop:storefront"), {"category": self.category.slug})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.product.title)
+        self.assertContains(response, other_product.title)
 
     def test_mock_payment_completes_order_and_delivers_code(self):
         client = Client()
@@ -220,6 +240,17 @@ class StoreOrderFlowTests(TestCase):
         self.assertContains(response, "微信支付")
         self.assertContains(response, "USDT")
         self.assertContains(response, "银行卡转账")
+
+    def test_checkout_page_does_not_include_global_content_card_heading_override(self):
+        client = Client()
+        self.assertTrue(client.login(username="buyer", password="Buyer123!"))
+        client.post(reverse("shop:create_order", args=[self.product.slug]), {"quantity": 1})
+        order = Order.objects.get(user=self.buyer)
+
+        response = client.get(reverse("shop:checkout", args=[order.order_no]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, ".apple-home .apple-hero h1")
+        self.assertNotContains(response, ".content-card h1 {\n            font-size: clamp(3rem, 7.5vw, 6.5rem);")
 
     def test_payment_success_requires_matching_paid_session_metadata(self):
         client = Client()
