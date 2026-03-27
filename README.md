@@ -46,6 +46,12 @@ python manage.py runserver
 python manage.py preflight_check
 ```
 
+本地调试 Stripe webhook 可执行：
+
+```bash
+./scripts/start-stripe-webhook-forward.sh
+```
+
 ### 2. 默认访问地址
 
 - 首页：`http://127.0.0.1:8000/`
