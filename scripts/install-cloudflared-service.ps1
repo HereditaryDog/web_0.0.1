@@ -23,8 +23,8 @@ if (-not (Test-Path $cloudflared)) {
 
 & $nssm install $serviceName $cloudflared "tunnel --no-autoupdate run --token $TunnelToken"
 & $nssm set $serviceName AppDirectory $projectRoot
-& $nssm set $serviceName DisplayName "G-Master发卡网 Cloudflare Tunnel"
-& $nssm set $serviceName Description "Cloudflare Tunnel for public access to G-Master发卡网"
+& $nssm set $serviceName DisplayName "G-MasterToken Cloudflare Tunnel"
+& $nssm set $serviceName Description "Cloudflare Tunnel for public access to G-MasterToken"
 & $nssm set $serviceName Start SERVICE_AUTO_START
 & $nssm set $serviceName AppStdout (Join-Path $logDir "cloudflared.out.log")
 & $nssm set $serviceName AppStderr (Join-Path $logDir "cloudflared.err.log")

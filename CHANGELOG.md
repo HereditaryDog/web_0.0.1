@@ -2,6 +2,29 @@
 
 本文件记录项目的可见版本变更。
 
+## 0.1.9 - 2026-03-27
+
+### Added
+
+- 新增 `verify_stripe_setup` 管理命令，可直接检查 Stripe key、webhook 地址与 API 连通性
+- 新增订单详情页支付参考号展示与复制入口，便于排查真实支付记录
+
+### Changed
+
+- 全站项目名称统一调整为 `G-MasterToken`
+- Stripe readiness 检查补充公网 HTTPS 回调地址校验
+- 订单详情页与商家订单详情页把“支付流水”统一改名为更准确的“支付参考号 / Stripe 会话编号”
+
+### Fixed
+
+- 修复真实 Stripe Checkout 跳转链接过长时 `checkout_url` 字段落库失败的问题
+- 修复长串 Stripe 会话编号在订单详情页里挤坏布局的问题
+
+### Verified
+
+- `manage.py check`
+- `manage.py test`
+
 ## 0.1.8 - 2026-03-27
 
 ### Changed
@@ -110,7 +133,7 @@
 
 ### Changed
 
-- 全站品牌名称统一切换为 `G-Master发卡网`
+- 全站品牌名称统一切换为 `G-MasterToken`
 - 首页 Hero 重构为更简洁的品牌展示形式，移除多余说明区块和帮助文章区块
 - 商品卡图片浮层改回更直观的磨砂卡片样式，并收敛顶部叠字，只保留下方信息层
 - 首页、商品详情、商家总览、账号中心的排版、字距、字体和视觉层次继续优化

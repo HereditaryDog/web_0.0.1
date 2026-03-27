@@ -1,8 +1,11 @@
+import ipaddress
 from dataclasses import asdict, dataclass
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
+from django.urls import reverse
 
 from shop.services.payment import list_active_payment_gateways
 
@@ -12,6 +15,35 @@ LOCAL_EMAIL_BACKENDS = {
     "django.core.mail.backends.filebased.EmailBackend",
     "django.core.mail.backends.locmem.EmailBackend",
 }
+
+
+def is_public_https_base_url(url):
+    if not url:
+        return False, "SITE_BASE_URL 为空。"
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or "").strip().lower()
+    if parsed.scheme != "https":
+        return False, "SITE_BASE_URL 必须是公网可访问的 HTTPS 地址，Stripe webhook 才能稳定回调。"
+    if not hostname:
+        return False, "SITE_BASE_URL 缺少主机名。"
+    if hostname == "localhost" or hostname.endswith(".local"):
+        return False, "SITE_BASE_URL 不能是 localhost 或 .local 域名，Stripe 无法从公网回调。"
+    try:
+        ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        if "." not in hostname:
+            return False, "SITE_BASE_URL 主机名看起来不是公网域名。"
+        return True, ""
+    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_unspecified:
+        return False, "SITE_BASE_URL 当前是内网/本地地址，Stripe webhook 无法从公网访问。"
+    return True, ""
+
+
+def stripe_webhook_public_url():
+    base_url = settings.SITE_BASE_URL.strip().rstrip("/")
+    if not base_url:
+        return ""
+    return f"{base_url}{reverse('shop:stripe_webhook')}"
 
 
 @dataclass
@@ -196,6 +228,14 @@ def _stripe_checkout_check():
             label="Stripe 实时支付",
             status="warn",
             detail="SITE_BASE_URL 为空，Stripe 成功/取消回跳地址不稳定。",
+        )
+    public_ok, public_detail = is_public_https_base_url(settings.SITE_BASE_URL)
+    if not public_ok:
+        return ReadinessCheck(
+            key="stripe_checkout",
+            label="Stripe 实时支付",
+            status="warn",
+            detail=f"{public_detail} 当前 webhook 地址：{stripe_webhook_public_url() or '未生成'}",
         )
     if not settings.STRIPE_WEBHOOK_SECRET:
         return ReadinessCheck(

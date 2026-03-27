@@ -24,7 +24,7 @@ ADMIN_ALLOWED_IPS = [ip.strip() for ip in os.getenv("ADMIN_ALLOWED_IPS", "").spl
 MERCHANT_ALLOWED_IPS = [ip.strip() for ip in os.getenv("MERCHANT_ALLOWED_IPS", "").split(",") if ip.strip()]
 TRUSTED_PROXY_IPS = [ip.strip() for ip in os.getenv("TRUSTED_PROXY_IPS", "").split(",") if ip.strip()]
 
-SITE_NAME = os.getenv("SITE_NAME", "G-Master发卡网")
+SITE_NAME = os.getenv("SITE_NAME", "G-MasterToken")
 SITE_BASE_URL = os.getenv("SITE_BASE_URL", "").strip().rstrip("/")
 CARD_SECRET_KEY = os.getenv("CARD_SECRET_KEY", "").strip()
 PROJECT_VERSION = os.getenv("PROJECT_VERSION", VERSION)
@@ -175,7 +175,7 @@ LOGIN_REDIRECT_URL = 'shop:storefront'
 LOGOUT_REDIRECT_URL = 'shop:storefront'
 LOGIN_URL = 'accounts:login'
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", 'django.core.mail.backends.console.EmailBackend')
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@gmaster.local")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@gmastertoken.local")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")

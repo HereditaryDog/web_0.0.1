@@ -22,8 +22,23 @@
                 <div class="row-line"><span>买家账号</span><strong>{{ order.user.username }}</strong></div>
                 <div class="row-line"><span>邮箱</span><strong>{{ order.user.email|default:"-" }}</strong></div>
                 <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
-                <div class="row-line"><span>支付渠道</span><strong>{{ order.payment_provider|default:"-" }}</strong></div>
-                <div class="row-line"><span>支付流水</span><strong>{{ order.payment_reference|default:"-" }}</strong></div>
+                <div class="row-line"><span>支付渠道</span><strong>{{ order.payment_provider|default:"-"|title }}</strong></div>
+                <div class="detail-meta-block">
+                    <div class="detail-meta-block__header">
+                        <span>{% if order.payment_provider == "stripe" %}Stripe 会话编号{% else %}支付参考号{% endif %}</span>
+                        {% if order.payment_reference %}
+                            <button
+                                type="button"
+                                class="ghost-button js-copy-trigger"
+                                data-copy-text="{{ order.payment_reference }}"
+                                data-copy-label="复制参考号"
+                            >
+                                复制参考号
+                            </button>
+                        {% endif %}
+                    </div>
+                    <div class="detail-meta-block__value detail-meta-block__value--mono">{{ order.payment_reference|default:"-" }}</div>
+                </div>
                 <div class="row-line"><span>总金额</span><strong>{{ order.total_amount|cny }}</strong></div>
                 <div class="row-line"><span>商家备注</span><strong>{{ order.merchant_note|default:"-" }}</strong></div>
             </div>
@@ -94,7 +109,7 @@
                     <thead>
                         <tr>
                             <th>渠道</th>
-                            <th>流水</th>
+                            <th>参考号</th>
                             <th>状态</th>
                             <th>时间</th>
                         </tr>

@@ -315,6 +315,34 @@ class StoreOrderFlowTests(TestCase):
         attempt = PaymentAttempt.objects.get(order=order, provider="stripe", reference="cs_test_123")
         self.assertEqual(attempt.status, PaymentAttempt.Status.CREATED)
 
+    @override_settings(
+        PAYMENT_ENABLE_MOCK_GATEWAY=False,
+        PAYMENT_ENABLE_STRIPE_GATEWAY=True,
+        STRIPE_SECRET_KEY="sk_test_123",
+        STRIPE_CURRENCY="cny",
+        SITE_BASE_URL="https://pay.example.com",
+    )
+    @patch("shop.services.payment.stripe.checkout.Session.create")
+    def test_stripe_checkout_session_allows_long_checkout_url(self, mock_create):
+        mock_session = mock_create.return_value
+        mock_session.id = "cs_test_long_123"
+        mock_session.url = "https://checkout.stripe.com/pay/" + ("a" * 260)
+        mock_session.to_dict.return_value = {"id": "cs_test_long_123"}
+
+        client = Client()
+        self.assertTrue(client.login(username="buyer", password="Buyer123!"))
+        client.post(reverse("shop:create_order", args=[self.product.slug]), {"quantity": 1})
+        order = Order.objects.get(user=self.buyer)
+
+        response = client.post(reverse("shop:start_payment", args=[order.order_no]), {"provider": "stripe"})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith("https://checkout.stripe.com/pay/"))
+
+        order.refresh_from_db()
+        self.assertEqual(order.checkout_url, mock_session.url)
+        attempt = PaymentAttempt.objects.get(order=order, provider="stripe", reference="cs_test_long_123")
+        self.assertEqual(attempt.checkout_url, mock_session.url)
+
     def test_stripe_webhook_async_payment_failed_marks_order_unpaid(self):
         order = create_single_item_order(self.buyer, self.product, 1)
         order = mark_order_checkout_created(
@@ -692,6 +720,8 @@ class AccountCenterEnhancementTests(TestCase):
         response = self.client.get(reverse("shop:order_detail", args=[self.completed_order.order_no]))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "REPEAT-CODE-001")
+        self.assertContains(response, "支付参考号")
+        self.assertNotContains(response, "支付流水")
 
     def test_order_delivery_reveal_requires_owner_or_merchant(self):
         other = User.objects.create_user(username="other", password="Other123!", email="other@example.com")
@@ -780,6 +810,20 @@ class ReadinessChecksTests(TestCase):
         stripe_check = next(check for check in result["checks"] if check["key"] == "stripe_checkout")
         self.assertEqual(stripe_check["status"], "warn")
         self.assertIn("STRIPE_WEBHOOK_SECRET", stripe_check["detail"])
+
+    @override_settings(
+        DEBUG=False,
+        SITE_BASE_URL="http://192.168.1.28:8000",
+        PAYMENT_ENABLE_MOCK_GATEWAY=False,
+        PAYMENT_ENABLE_STRIPE_GATEWAY=True,
+        STRIPE_SECRET_KEY="sk_test_123",
+        STRIPE_WEBHOOK_SECRET="whsec_123",
+    )
+    def test_readiness_checks_warn_when_stripe_site_base_url_is_private(self):
+        result = run_readiness_checks()
+        stripe_check = next(check for check in result["checks"] if check["key"] == "stripe_checkout")
+        self.assertEqual(stripe_check["status"], "warn")
+        self.assertIn("公网可访问的 HTTPS 地址", stripe_check["detail"])
 
     def test_readiness_endpoint_returns_json(self):
         response = self.client.get(reverse("shop:readiness"))

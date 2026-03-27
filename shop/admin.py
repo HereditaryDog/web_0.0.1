@@ -16,8 +16,8 @@ from .models import (
     SupportTicketMessage,
 )
 
-admin.site.site_header = "G-Master发卡网 商城后台"
-admin.site.site_title = "G-Master发卡网"
+admin.site.site_header = "G-MasterToken 商城后台"
+admin.site.site_title = "G-MasterToken"
 admin.site.index_title = "商城管理"
 
 

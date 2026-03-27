@@ -1,12 +1,12 @@
-# G-Master发卡网
+# G-MasterToken
 
 ## 版本号
 
-当前版本：`0.1.8`
+当前版本：`0.1.9`
 
 ## 项目介绍
 
-`G-Master发卡网` 是一个面向数字点卡与 Token 充值场景的 Django 商城项目。  
+`G-MasterToken` 是一个面向数字点卡与 Token 充值场景的 Django 商城项目。  
 当前包含前台商城、用户注册登录、订单系统、商家后台、帮助中心、邮件通知、库存卡密管理，以及支付与供货接口的预留结构。
 
 ## 前后端完成程度
@@ -63,7 +63,7 @@ python manage.py preflight_check
 DJANGO_SECRET_KEY=replace-me
 DJANGO_DEBUG=true
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost
-SITE_NAME=G-Master发卡网
+SITE_NAME=G-MasterToken
 SITE_BASE_URL=
 CARD_SECRET_KEY=
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
@@ -114,6 +114,13 @@ https://your-domain.example/webhooks/stripe/
 
 完整记录见 [CHANGELOG.md](CHANGELOG.md)
 
+### 0.1.9
+
+- 全站项目名称统一调整为 `G-MasterToken`
+- 新增 `verify_stripe_setup` 命令，支持直接检查 Stripe 配置与 API 连通性
+- 订单详情页把长串支付标识改成独立信息块展示，并统一改名为“支付参考号 / Stripe 会话编号”
+- 修复真实 Stripe Checkout 跳转链接过长导致落库失败的问题
+
 ### 0.1.8
 
 - 首页 Hero 的按钮与搜索区重做为专用控件组，尺寸和节奏更统一
@@ -149,7 +156,7 @@ https://your-domain.example/webhooks/stripe/
 
 ### 0.1.3
 
-- 统一品牌名为 `G-Master发卡网`
+- 统一品牌名为 `G-MasterToken`
 - 首页、商品卡、页脚与关键页面视觉继续重构，并补齐更稳定的排版细节
 - 新增本地 `UI 调试` 面板，可直接在浏览器里实时微调样式变量
 - 当前全量测试已通过

@@ -15,8 +15,8 @@ if (-not (Test-Path $nssm)) {
 
 & $nssm install $serviceName $powershell "-ExecutionPolicy Bypass -File `"$scriptPath`""
 & $nssm set $serviceName AppDirectory $projectRoot
-& $nssm set $serviceName DisplayName "G-Master发卡网 App Service"
-& $nssm set $serviceName Description "Runs G-Master发卡网 via Waitress on 127.0.0.1:8000"
+& $nssm set $serviceName DisplayName "G-MasterToken App Service"
+& $nssm set $serviceName Description "Runs G-MasterToken via Waitress on 127.0.0.1:8000"
 & $nssm set $serviceName Start SERVICE_AUTO_START
 & $nssm set $serviceName AppStdout (Join-Path $logDir "app-service.out.log")
 & $nssm set $serviceName AppStderr (Join-Path $logDir "app-service.err.log")

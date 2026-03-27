@@ -205,7 +205,7 @@ class Order(TimeStampedModel):
     )
     payment_provider = models.CharField("支付渠道", max_length=40, blank=True)
     payment_reference = models.CharField("支付流水", max_length=120, blank=True)
-    checkout_url = models.URLField("支付链接", blank=True)
+    checkout_url = models.URLField("支付链接", blank=True, max_length=2048)
     customer_note = models.CharField("买家备注", max_length=240, blank=True)
     merchant_note = models.CharField("商家备注", max_length=240, blank=True)
     subtotal = models.DecimalField("小计", max_digits=10, decimal_places=2, default=Decimal("0.00"))
@@ -284,7 +284,7 @@ class PaymentAttempt(TimeStampedModel):
     order = models.ForeignKey(Order, related_name="payment_attempts", on_delete=models.CASCADE)
     provider = models.CharField("支付平台", max_length=40)
     reference = models.CharField("平台流水", max_length=120)
-    checkout_url = models.URLField("支付跳转", blank=True)
+    checkout_url = models.URLField("支付跳转", blank=True, max_length=2048)
     status = models.CharField("状态", max_length=20, choices=Status.choices, default=Status.CREATED)
     raw_payload = models.JSONField("原始数据", default=dict, blank=True)
 

@@ -23,8 +23,26 @@
         <div class="content-card soft">
             <h3>订单信息</h3>
             <div class="row-line"><span>支付状态</span><strong>{{ order.get_payment_status_display }}</strong></div>
-            <div class="row-line"><span>支付方式</span><strong>{{ order.payment_provider|default:"未生成" }}</strong></div>
-            <div class="row-line"><span>支付流水</span><strong>{{ order.payment_reference|default:"-" }}</strong></div>
+            <div class="row-line"><span>支付方式</span><strong>{{ order.payment_provider|default:"未生成"|title }}</strong></div>
+            <div class="detail-meta-block">
+                <div class="detail-meta-block__header">
+                    <span>{% if order.payment_provider == "stripe" %}Stripe 会话编号{% else %}支付参考号{% endif %}</span>
+                    {% if order.payment_reference %}
+                        <button
+                            type="button"
+                            class="ghost-button js-copy-trigger"
+                            data-copy-text="{{ order.payment_reference }}"
+                            data-copy-label="复制参考号"
+                        >
+                            复制参考号
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="detail-meta-block__value detail-meta-block__value--mono">{{ order.payment_reference|default:"-" }}</div>
+                {% if order.payment_provider == "stripe" and order.payment_reference %}
+                    <p class="muted detail-meta-block__hint">这是 Stripe Checkout 返回的会话编号，用于核对支付记录和排查支付问题。</p>
+                {% endif %}
+            </div>
             <div class="row-line"><span>订单金额</span><strong>{{ order.total_amount|cny }}</strong></div>
             {% if order.payment_status == "paid" and order.status == "failed" %}
                 <p class="muted">支付已经确认，但自动发货暂未完成。商家补货或排查后会重新处理，你也可以通过客服工单继续跟进。</p>
