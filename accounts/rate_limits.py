@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from shop.security import get_request_ip
@@ -50,6 +51,16 @@ def normalize_login_bucket(login_value):
     normalized = (login_value or "").strip().lower()
     if not normalized:
         return ""
+    user_model = get_user_model()
+    try:
+        if "@" in normalized:
+            user = user_model.objects.filter(email__iexact=normalized).only("pk").first()
+        else:
+            user = user_model.objects.filter(username__iexact=normalized).only("pk").first()
+    except Exception:
+        user = None
+    if user is not None:
+        return f"user:{user.pk}"
     if "@" in normalized:
         return f"email:{normalized}"
     return f"username:{normalized}"
@@ -69,6 +80,7 @@ def build_login_throttle_scopes(scope_prefix, request, login_value):
 def build_login_success_buckets(scope_prefix, request, login_value, user=None):
     buckets = set(build_login_throttle_scopes(scope_prefix, request, login_value))
     if user is not None:
+        buckets.add((f"{scope_prefix}_account", f"user:{user.pk}"))
         buckets.add((f"{scope_prefix}_account", normalize_login_bucket(user.username)))
         buckets.add((f"{scope_prefix}_account", normalize_login_bucket(user.email)))
     return [pair for pair in buckets if pair[1]]
